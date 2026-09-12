@@ -1,0 +1,40 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Copilot Chat",
+      "hasCanvas": false,
+      "bodyTextLen": 3385,
+      "bodyTextHash": "2f6282a09f3c1fca29ec38323597029e03ba9378227547926e216cf2b0d55969",
+      "bodyTextPrefix": "Copilot Chat Tools Agents Models Free Docs Sign in with Puter Ne",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Copilot Chat",
+      "hasCanvas": false,
+      "bodyTextLen": 3307,
+      "bodyTextHash": "174015233495ed4bbe83ce50fbe7e6e3d67c58316bd8d68ee696754205a5d28b",
+      "bodyTextPrefix": "Puter Puter login · 500+ free models Copilot Chat. ไม่มีอะไรที่ท",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": true,
+  "baselineReasons": [
+    "desktop: body text replaced (similar length, page start changed)"
+  ]
+}
