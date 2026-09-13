@@ -26,6 +26,8 @@ const GITHUB_TOOLS = `
 You have real server-side GitHub tools available through the Bossnu SlieLo bot.
 The bot can: inspect a repository, read files, write/commit files, create branches, create pull requests, create issues, inspect recent GitHub Actions runs, and dispatch a workflow.
 Never claim an action was completed unless a GitHub tool result confirms it.
+Credential escalation is task-aware: preserve the user's current task, identify the exact service/operation that is blocked, and request only the minimum missing access. Do not ask a vague 'which job?' question when the task is already known.
+If access can be supplied by an already-connected tool, use that tool first. If a private credential is genuinely required, name the exact service and credential field/environment variable and direct the user to the secure Secrets/connection UI. Never ask for private keys, PEM files, passwords, tokens, cookies, or service-account JSON in ordinary chat and never echo a credential value.
 Available command formats:
 - github: status owner/repo
 - github: read owner/repo/path/to/file [ref]
@@ -219,29 +221,21 @@ async function runAutonomousAgent(data: FleetRequest, onDelta?: (full: string) =
 }
 
 function isAutonomousRequest(prompt: string) {
-  const p = prompt.trim();
-  if (/^ทำเลย\s*:/i.test(p)) return true;
-  return /(ตรวจเว็บ|ตรวจโปรเจกต์|ตรวจทั้งโปรเจกต์|แก้.*deploy|deploy.*ไม่ผ่าน|deploy.*ไม่สำเร็จ|deployment.*error|build.*ไม่ผ่าน|build.*พัง|แก้.*500|error.*deploy)/i.test(p);
+  return /(?:ทำเลย\s*:|ตรวจเว็บ|ตรวจโปรเจกต์|แก้.*deploy|deploy.*ไม่ผ่าน|deployment.*error|build.*ไม่ผ่าน|แก้.*500)/i.test(prompt);
 }
 
 export async function runFleet(data: FleetRequest, onDelta?: (full: string) => void): Promise<ChatResult> {
-  const system = SYSTEM_PROMPTS[data.mode] ?? SYSTEM_PROMPTS.chat;
-  if (!data.prompt.trim()) return { ok: false, error: "Write a prompt or paste some code first." };
-  if (isAutonomousRequest(data.prompt)) {
-    try { return await runAutonomousAgent(data, onDelta); }
-    catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Autonomous GitHub action failed" }; }
-  }
+  if (isAutonomousRequest(data.prompt)) return runAutonomousAgent(data, onDelta);
 
-  let githubContext: string | undefined;
-  try { githubContext = await runGitHubCommand(data.prompt); }
-  catch (error) { return { ok: false, error: error instanceof Error ? error.message : "GitHub action failed" }; }
-
-  const user = buildUserMessage(data, githubContext);
-  const history = (data.history ?? []).slice(-10);
-  const messages: ChatTurn[] = [
-    { role: "system", content: system.slice(0, 8000) },
-    ...history,
-    { role: "user", content: user.slice(0, 24000) },
-  ];
-  return chatWithPuter({ messages, model: data.modelId || "gpt-5.6-luna", onDelta });
+  const githubContext = await runGitHubCommand(data.prompt).catch((error) => `GitHub tool error: ${error instanceof Error ? error.message : String(error)}`);
+  const result = await chatWithPuter({
+    messages: [
+      { role: "system", content: SYSTEM_PROMPTS[data.mode as keyof typeof SYSTEM_PROMPTS] ?? SYSTEM_PROMPTS.chat },
+      ...(data.history ?? []).slice(-8),
+      { role: "user", content: buildUserMessage(data, githubContext) },
+    ],
+    model: data.modelId || "gpt-5.6-luna",
+    onDelta,
+  });
+  return result;
 }
