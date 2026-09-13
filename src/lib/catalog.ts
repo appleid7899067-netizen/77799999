@@ -14,7 +14,7 @@ import {
   Workflow,
 } from "lucide-react";
 
-export const APP_NAME = "Copilot Chat";
+export const APP_NAME = "Bossnu SlieLo";
 export const MOTTO_TH = "ไม่มีอะไรที่ทำไม่ได้ · ไม่มีสิ่งใดที่แก้ไม่ได้";
 export const MOTTO_EN = "Nothing is impossible. Nothing can't be fixed.";
 
@@ -345,149 +345,7 @@ export const AGENTS: AgentProfile[] = [
     handle: "tester",
     name: "Tester",
     role: "Coverage, fixtures, failure modes.",
-    posture: "allow-edits",
-    instructions: "Write tests that would have caught the bug. No snapshot theatre.",
-  },
-  {
-    id: "architect",
-    handle: "architect",
-    name: "Architect",
-    role: "Boundaries, data flow, what not to build.",
     posture: "read-only",
-    instructions: "Propose the thinnest architecture that survives the next three features.",
-  },
-  {
-    id: "docs",
-    handle: "scribe",
-    name: "Scribe",
-    role: "Docs that a stranger can run in five minutes.",
-    posture: "allow-edits",
-    instructions: "Document the contract, not the implementation gossip.",
-  },
-  {
-    id: "advocate",
-    handle: "devils-advocate",
-    name: "Devil's advocate",
-    role: "Challenge the plan before anyone writes code.",
-    posture: "read-only",
-    instructions: "Challenge every plan. Hunt for gaps and unspoken assumptions.",
+    instructions: "Test the behavior, edge cases, and failure modes before calling it done.",
   },
 ];
-
-export type McpServer = { id: string; name: string; category: string; blurb: string };
-
-export const MCP_SERVERS: McpServer[] = [
-  { id: "context7", name: "Context7", category: "Docs", blurb: "Up-to-date library docs by version." },
-  { id: "deepwiki", name: "DeepWiki", category: "Docs", blurb: "Repo wikis turned into queryable context." },
-  { id: "github", name: "GitHub", category: "Source", blurb: "Issues, PRs, contents, checks." },
-  { id: "supabase", name: "Supabase", category: "Data", blurb: "Postgres, auth, storage, edge functions." },
-  { id: "aws", name: "AWS Knowledge", category: "Cloud", blurb: "Service docs, IAM patterns, quotas." },
-  { id: "sentry", name: "Sentry", category: "Observability", blurb: "Issues, stack traces, release health." },
-  { id: "stripe", name: "Stripe", category: "Payments", blurb: "API, webhooks, billing objects." },
-  { id: "huggingface", name: "Hugging Face", category: "ML", blurb: "Models, datasets, inference." },
-];
-
-export type DocArticle = { slug: string; title: string; section: string; body: string[] };
-
-export const DOCS: DocArticle[] = [
-  {
-    slug: "about",
-    title: "About Copilot Chat",
-    section: "Start",
-    body: [
-      "Copilot Chat is a coding workspace that runs on Puter. You sign in once. After that, chat, generate, convert, review, and run code against free models — GPT, Claude, Gemini, Qwen, DeepSeek — with no API keys of your own.",
-      MOTTO_TH + " " + MOTTO_EN,
-    ],
-  },
-  {
-    slug: "puter",
-    title: "Puter login & free models",
-    section: "Start",
-    body: [
-      "Puter uses a user-pays model: you sign in with a Puter account (or a temporary one) and Puter covers the model call against your Puter usage. This app never sees an API key.",
-      "The first AI action may open a Puter popup. Allow popups for this site. If the window is blocked, use Sign in with Puter in the header and try again.",
-    ],
-  },
-  {
-    slug: "models",
-    title: "Choosing a model",
-    section: "Start",
-    body: [
-      "Luna, Haiku, Flash, and Nano are for short transforms. Sonnet, Terra, Codex, Qwen Coder, and DeepSeek Pro are for refactors. Opus is for hard reasoning.",
-      "Every model in the picker is called through Puter with the real model id. If a vendor is down, switch models — nothing here is mocked.",
-    ],
-  },
-  {
-    slug: "code-execution",
-    title: "Code execution",
-    section: "Platform",
-    body: [
-      "The runner executes JavaScript and TypeScript in a sandboxed iframe in this browser. Other languages are traced by the selected model so you still get stdout, stderr, and a verdict.",
-    ],
-  },
-  {
-    slug: "parallel-agents",
-    title: "Parallel agents",
-    section: "Platform",
-    body: [
-      "Give one task to the orchestrator. It frames bounded sub-tasks for @shipper, @reviewer, @security, @tester and the rest, then synthesizes one answer back into your thread.",
-    ],
-  },
-  {
-    slug: "privacy",
-    title: "Privacy",
-    section: "Trust",
-    body: [
-      "Threads, generations, sandboxes, and memory live in this browser (localStorage). Prompts go to Puter so the selected model can answer. This app does not keep a server-side copy of your code.",
-    ],
-  },
-];
-
-export const ROUTINE_TEMPLATES = [
-  { id: "standup", name: "Morning standup", cadence: "Weekdays 09:00", prompt: "Summarize open PRs, failing checks, and yesterday's chat memory into an 8-line standup." },
-  { id: "tests", name: "Nightly tests", cadence: "Daily 02:00", prompt: "Generate missing unit tests for files touched in the last 24 hours and open a review." },
-  { id: "deps", name: "Dependency audit", cadence: "Mondays 08:00", prompt: "Scan lockfiles for CVEs and stale majors. Rank by blast radius." },
-  { id: "review", name: "PR review sweep", cadence: "Every 4 hours", prompt: "Review open pull requests. Flag security and missing tests first." },
-];
-
-export const STATS = {
-  models: 500,
-  tools: TOOLS.length,
-  agents: AGENTS.length,
-};
-
-export function toolBySlug(slug: string) {
-  return TOOLS.find((t) => t.slug === slug);
-}
-
-export function modelById(id: string) {
-  return MODELS.find((m) => m.id === id) ?? MODELS[0];
-}
-
-export const SYSTEM_PROMPTS: Record<string, string> = {
-  generator:
-    "You are Copilot Chat Code Generator. Write production-quality code. Prefer complete, runnable files. Explain briefly after the code. Use markdown with fenced blocks labeled by language.",
-  assistant:
-    "You are Copilot Chat Code Assistant. Fix, improve, or extend the user's code. Show the patched code, then a short rationale. Do not rewrite unrelated parts.",
-  converter:
-    "You are Copilot Chat Code Converter. Translate code between languages/frameworks. Preserve behavior. Idiomatic target language. Note semantic mismatches.",
-  explainer:
-    "You are Copilot Chat Code Explainer. Explain clearly. Structure: what it does, how, pitfalls, a tiny example. Match the requested verbosity.",
-  enhancer:
-    "You are Copilot Chat Code Enhancer. Return ranked suggestions (High/Med/Low) with before/after snippets. Then an optional fully enhanced file.",
-  documentation:
-    "You are Copilot Chat Documentation Generator. Produce README, API docs, and docstrings. Accurate to the given code. No fluff.",
-  tests:
-    "You are Copilot Chat Unit Test Generator. Write real tests (vitest/pytest/go test as appropriate) covering edge cases. Include setup.",
-  diagram:
-    "You are Copilot Chat Diagram Generator. Output a mermaid diagram in a ```mermaid fence, then a short legend. Prefer flowchart, sequence, class, or erDiagram as fits the ask.",
-  "diagram-to-code":
-    "You are Copilot Chat Diagram-to-Code. Implement the diagram as working code in the requested language. Keep names from the diagram.",
-  reviewer:
-    "You are Copilot Chat Code Reviewer. Findings first, each with severity (blocker/major/minor/nit), location, why, and a patch. End with a verdict.",
-  chat: "You are Copilot Chat, a coding copilot. Motto: nothing is impossible, nothing can't be fixed. Be direct. Prefer code fences. If tools or agents are enabled, reason with them conceptually and still give a usable answer.",
-  agents:
-    "You are the Copilot Chat orchestrator. For the user's task, produce work from these agents in this order, each under a heading `## @handle — Name`:\n@architect, @security, @shipper, @tester, @reviewer, @scribe, @devils-advocate.\nThen a final `## Synthesis` that the human can act on. Keep each agent section tight. Code in fences.",
-  runner:
-    "You are Copilot Chat Code Runner copilot. The user ran or asked about code. Diagnose, suggest a fix, or optimize. Show a corrected snippet if needed.",
-};
