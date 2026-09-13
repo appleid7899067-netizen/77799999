@@ -1,0 +1,15 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { loadCodingFleetTools } from "@/lib/puter-tool-loader";
+import { executeAgentCode, runAgentLoop } from "@/lib/agent-loop";
+
+const loopSchema = z.object({ prompt: z.string().min(1).max(60_000), maxIterations: z.number().int().min(1).max(3).optional() });
+const codeSchema = z.object({ language: z.string().min(1).max(40), code: z.string().max(500_000) });
+
+export const runAgent = createServerFn({ method: "POST" })
+  .validator(loopSchema)
+  .handler(async ({ data }) => runAgentLoop(data.prompt, await loadCodingFleetTools(), data.maxIterations ?? 3));
+
+export const runAgentSandbox = createServerFn({ method: "POST" })
+  .validator(codeSchema)
+  .handler(async ({ data }) => executeAgentCode(data.language, data.code));
