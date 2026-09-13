@@ -20,14 +20,19 @@ declare global { interface Window { puter?: PuterAPI } }
 
 const SCRIPT_SRC = "https://js.puter.com/v2/";
 const CREDENTIAL_POLICY = `
-Credential policy for Bossnu SlieLo:
-- Use connected tools when available.
-- If a required private credential is missing, say so immediately and name the service and exact environment variable needed.
-- Never invent, expose, echo, commit, or store secrets.
-- Never ask users to paste private keys, PEM files, passwords, or access tokens into normal chat when a provider/hosting Secrets setting can be used.
-- Ask for the minimum missing connection/credential and tell the user where it belongs (provider/hosting Secrets).
-- Public IDs, project IDs, repository names, and service IDs are not secrets and may be requested normally.
-- If a secret is accidentally pasted into chat, do not repeat it; recommend rotation and continue without echoing it.
+Credential policy for Bossnu SlieLo — universal credential handling:
+- Treat every credential as sensitive, regardless of provider or format: API keys, access tokens, OAuth tokens, JWTs, passwords, client secrets, private keys/PEM, SSH keys, database URLs with passwords, webhook secrets, signing secrets, cookies, session tokens, service-account JSON, and cloud credentials.
+- First determine the task/service that needs the credential. Do not make the customer repeat the whole task just because a credential is missing.
+- If a connected tool can perform the task without customer credentials, use that connected tool immediately.
+- If the required credential is missing, say exactly: which service needs access, what operation is blocked, and the exact environment-variable/secret name or connection field needed. Ask only for the minimum missing credential.
+- Prefer a secure provider/hosting Secrets or connection UI. Never ask a customer to paste a private key, PEM, password, token, cookie, or service-account JSON into ordinary chat.
+- If a customer accidentally sends a secret in chat, do not quote, repeat, summarize, log, or place it into code, GitHub, prompts, model context, browser storage, localStorage, or analytics. Treat it as compromised, recommend rotation, and continue with a secure connection path.
+- Never invent credentials and never claim a credential was installed, connected, tested, or used unless a real tool result confirms it.
+- Public IDs, repository names, project IDs, account IDs, and service IDs are not secrets and may be requested normally.
+- Credential names must be task-specific when possible (for example OPENAI_API_KEY, DATABASE_URL, VERCEL_TOKEN, RENDER_API_KEY, GITHUB_APP_PRIVATE_KEY). Do not require a customer to know the variable name if the bot can identify it from the service/task.
+- If the customer says they cannot configure secrets themselves, give the shortest secure setup path for the current provider/hosting and keep the task context intact; do not ask them to expose the secret in chat.
+- A credential request must never be tied to a vague 'which job?' question. Preserve the current task and name the exact blocked step.
+- Never expose or return the value of any credential, even after a successful connection. Confirm only the service, scope, and connection state.
 `;
 
 function isBrowser() { return typeof window !== "undefined"; }
@@ -89,7 +94,7 @@ export type ChatResult = { ok: true; text: string; model: string } | { ok: false
 function withCredentialPolicy(messages: ChatTurn[]): ChatTurn[] {
   const index = messages.findIndex((m) => m.role === "system");
   if (index < 0) return [{ role: "system", content: CREDENTIAL_POLICY.trim() }, ...messages];
-  return messages.map((m, i) => i === index && !m.content.includes("Credential policy for Bossnu SlieLo:")
+  return messages.map((m, i) => i === index && !m.content.includes("Credential policy for Bossnu SlieLo — universal credential handling:")
     ? { ...m, content: `${m.content}\n\n${CREDENTIAL_POLICY.trim()}` } : m);
 }
 
