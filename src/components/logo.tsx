@@ -20,11 +20,11 @@ export function FleetMark({ className }: { className?: string }) {
 
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <Link to="/" className="flex min-w-0 items-center gap-2.5 text-fg no-underline" aria-label="Bossnu CodingFleet home">
+    <Link to="/" className="flex min-w-0 items-center gap-2.5 text-fg no-underline" aria-label="Bossnu SlieLo home">
       <FleetMark className="shrink-0" />
       {!compact && (
         <span className="hidden font-medium tracking-tight sm:inline">
-          Bossnu <span className="text-primary">CodingFleet</span>
+          Bossnu <span className="text-primary">SlieLo</span>
         </span>
       )}
     </Link>
