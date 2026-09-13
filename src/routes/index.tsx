@@ -67,15 +67,16 @@ function Home() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-elevated px-3 py-1 text-xs text-muted shadow-[var(--shadow-border)]">
               <span className="size-1.5 rounded-full bg-ok" />
-              Puter login · 500+ free models
+              ผู้บริหาร Bossnu SlieLo · AI Coding Fleet
             </div>
             <h1 className="mt-5 text-4xl font-medium tracking-tight sm:text-5xl">
-              Copilot Chat.
+              Bossnu <span className="text-primary">SlieLo</span>
+              <span className="mt-2 block">แชทกับนักบินผู้ช่วย</span>
               <span className="mt-2 block text-primary">{MOTTO_TH}</span>
             </h1>
             <p className="mt-5 max-w-prose text-base text-muted">
-              {MOTTO_EN} Sign in with Puter. Generate, review, convert, and ship — GPT, Claude, Gemini, Qwen,
-              DeepSeek — no API keys.
+              ผู้ช่วยอัจฉริยะของผู้บริหาร <span className="text-primary">Bossnu SlieLo</span> พร้อมช่วยคุณในทุกเรื่อง
+              ไม่ว่าจะเป็นเขียนโค้ด สร้างระบบ ตรวจสอบ แปลง และจัดส่ง — GPT, Claude, Gemini, Qwen, DeepSeek — ไม่ต้องใช้คีย์ API
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button
@@ -90,22 +91,22 @@ function Home() {
               >
                 {signedIn ? (
                   <Link to="/chat">
-                    Open chat <ArrowRight className="size-4" />
+                    เริ่มแชทกับ Bossnu SlieLo <ArrowRight className="size-4" />
                   </Link>
                 ) : (
                   <>
-                    Sign in with Puter <ArrowRight className="size-4" />
+                    ลงชื่อเข้าใช้ด้วยคอมพิวเตอร์ <ArrowRight className="size-4" />
                   </>
                 )}
               </Button>
               <Button size="lg" variant="secondary" asChild>
-                <Link to="/chat">Try a chat</Link>
+                <Link to="/chat">ลองแชทดูสิ</Link>
               </Button>
             </div>
             <dl className="mt-10 grid max-w-lg grid-cols-3 gap-4">
-              <Stat n={`${STATS.models}+`} l="Free models" />
-              <Stat n={`${STATS.tools}`} l="Coding tools" />
-              <Stat n={`${STATS.agents}`} l="Agents" />
+              <Stat n={`${STATS.models}+`} l="โมเดลฟรี" />
+              <Stat n={`${STATS.tools}`} l="เครื่องมือเขียนโค้ด" />
+              <Stat n={`${STATS.agents}`} l="ตัวแทน AI" />
             </dl>
           </div>
 
@@ -126,7 +127,7 @@ function Home() {
             </div>
             <div className="mt-3 grid gap-2">
               <CodePane title="Input" body={current.from} />
-              <CodePane title="Copilot" body={current.to} accent />
+              <CodePane title="Bossnu SlieLo" body={current.to} accent />
             </div>
           </div>
         </div>
@@ -135,9 +136,9 @@ function Home() {
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <p className="text-xs font-medium uppercase tracking-wider text-subtle">Tools</p>
-          <h2 className="mt-2 text-2xl font-medium tracking-tight">A suite around real coding work.</h2>
+          <h2 className="mt-2 text-2xl font-medium tracking-tight">เครื่องมือ AI สำหรับงานเขียนโค้ดจริง</h2>
           <p className="mt-2 max-w-prose text-sm text-muted">
-            Each tool is a focused workflow. Chat is there when you need it. Every call is a free Puter model.
+            ทุกเครื่องมือออกแบบมาเพื่อช่วยผู้บริหารและนักพัฒนา ตั้งแต่สร้างโค้ด แก้บั๊ก ตรวจสอบ ไปจนถึงจัดส่งงาน
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {TOOLS.map((t) => (
@@ -161,21 +162,20 @@ function Home() {
       <section className="border-t border-border bg-surface">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 lg:grid-cols-2">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-subtle">Agent platform</p>
-            <h2 className="mt-2 text-2xl font-medium tracking-tight">One chat. A crew that cooperates.</h2>
+            <p className="text-xs font-medium uppercase tracking-wider text-subtle">Bossnu SlieLo · AI Platform</p>
+            <h2 className="mt-2 text-2xl font-medium tracking-tight">หนึ่งแชท ผู้ช่วยหลายทีม</h2>
             <p className="mt-3 text-sm text-muted">
-              Mention @shipper, @security, @reviewer. The orchestrator frames bounded sub-tasks and brings one
-              synthesis back.
+              มอบหมายงานให้ @shipper, @security, @reviewer แล้วให้ระบบช่วยรวบรวมคำตอบกลับมาเป็นหนึ่งเดียว
             </p>
             <ul className="mt-5 space-y-3 text-sm text-muted">
-              <Feature icon={Bot} text="Custom profiles — posture and instructions per agent." />
-              <Feature icon={Shield} text="Read-only, allow-edits, or full-auto — per agent." />
-              <Feature icon={Workflow} text="Observable runs. Sequenced journals." />
-              <Feature icon={Globe} text="MCP connectors and web access, per chat." />
-              <Feature icon={Terminal} text="Sandboxed JavaScript runner in the browser." />
+              <Feature icon={Bot} text="โปรไฟล์ผู้ช่วยเฉพาะงาน พร้อมคำสั่งและระดับการทำงาน" />
+              <Feature icon={Shield} text="กำหนดสิทธิ์ read-only, allow-edits หรือ full-auto" />
+              <Feature icon={Workflow} text="ติดตามการทำงานและลำดับงานของแต่ละ Agent" />
+              <Feature icon={Globe} text="เชื่อมต่อ MCP และเว็บตามแต่ละแชท" />
+              <Feature icon={Terminal} text="มี JavaScript runner สำหรับทดลองโค้ดในเบราว์เซอร์" />
             </ul>
             <Button className="mt-6" asChild>
-              <Link to="/agents">Launch parallel agents</Link>
+              <Link to="/agents">เปิดใช้งานผู้ช่วยหลายทีม</Link>
             </Button>
           </div>
           <div className="grid gap-2">
@@ -199,13 +199,13 @@ function Home() {
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-4 py-14">
           <p className="text-xs font-medium uppercase tracking-wider text-subtle">How it works</p>
-          <h2 className="mt-2 text-2xl font-medium tracking-tight">Four steps. No credit card.</h2>
+          <h2 className="mt-2 text-2xl font-medium tracking-tight">4 ขั้นตอน เริ่มใช้งานได้ทันที</h2>
           <ol className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { n: "01", t: "Sign in with Puter", d: "A popup. Allow it. Temporary accounts work." },
-              { n: "02", t: "Pick a model", d: "Luna for speed. Codex or Sonnet for refactors. Opus when it is hard." },
-              { n: "03", t: "Run it", d: "Chat, tools, agents, or the JS runner." },
-              { n: "04", t: "Ship", d: "Copy, download, or hand the patch to @shipper." },
+              { n: "01", t: "ลงชื่อเข้าใช้", d: "เข้าสู่ระบบผ่าน Puter อย่างรวดเร็ว" },
+              { n: "02", t: "เลือกโมเดล", d: "เลือกโมเดลให้เหมาะกับความเร็วและความยากของงาน" },
+              { n: "03", t: "สั่งงาน", d: "แชท ใช้เครื่องมือ หรือมอบหมายให้ Agent" },
+              { n: "04", t: "ส่งมอบงาน", d: "คัดลอก ดาวน์โหลด หรือส่งต่อให้ทีม" },
             ].map((s) => (
               <li key={s.n} className="rounded-xl bg-surface p-5 shadow-[var(--shadow-border)]">
                 <p className="font-mono text-xs text-primary">{s.n}</p>
@@ -220,16 +220,17 @@ function Home() {
       <section className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-4 py-14 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-2xl font-medium tracking-tight">{MOTTO_TH}</h2>
+            <p className="text-sm font-medium text-primary">ผู้บริหาร Bossnu SlieLo</p>
+            <h2 className="mt-2 text-2xl font-medium tracking-tight">{MOTTO_TH}</h2>
             <p className="mt-2 text-sm text-muted">{MOTTO_EN}</p>
           </div>
           <div className="flex gap-3">
             <Button size="lg" asChild>
-              <Link to="/chat">Start a chat</Link>
+              <Link to="/chat">เริ่มแชทกับ Bossnu SlieLo</Link>
             </Button>
             <Button size="lg" variant="secondary" asChild>
               <Link to="/tools/$slug" params={{ slug: "generator" }}>
-                <Play className="size-4" /> Try generator
+                <Play className="size-4" /> ทดลองสร้างโค้ด
               </Link>
             </Button>
           </div>
