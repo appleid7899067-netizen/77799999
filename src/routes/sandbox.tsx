@@ -3,6 +3,7 @@ import { Camera, Plus, Power, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
+import { SandboxPreview } from "@/components/SandboxPreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,8 @@ function SandboxPage() {
         <p className="mt-2 max-w-2xl text-sm text-muted">
           Isolated runtimes reused across chats. Stored in this browser. JavaScript execution happens in the runner.
         </p>
+
+        <SandboxPreview />
 
         <form
           className="mt-6 grid gap-3 rounded-xl bg-surface p-4 shadow-[var(--shadow-border)] sm:grid-cols-4"
