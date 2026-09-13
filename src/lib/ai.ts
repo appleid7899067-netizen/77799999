@@ -10,6 +10,7 @@ import {
   writeGitHubFile,
 } from "@/lib/github.functions";
 import { chatWithPuter, type ChatResult, type ChatTurn } from "@/lib/puter";
+import { callWithFallback, loadCodingFleetTools } from "@/lib/puter-tool-loader";
 
 export type FleetRequest = {
   mode: keyof typeof SYSTEM_PROMPTS | string;
@@ -228,14 +229,39 @@ export async function runFleet(data: FleetRequest, onDelta?: (full: string) => v
   if (isAutonomousRequest(data.prompt)) return runAutonomousAgent(data, onDelta);
 
   const githubContext = await runGitHubCommand(data.prompt).catch((error) => `GitHub tool error: ${error instanceof Error ? error.message : String(error)}`);
-  const result = await chatWithPuter({
+  const systemPrompt = SYSTEM_PROMPTS[data.mode as keyof typeof SYSTEM_PROMPTS] ?? SYSTEM_PROMPTS.chat;
+  const userMessage = buildUserMessage(data, githubContext);
+
+  // CodingFleet is an additive tool/model layer. If its public tool catalog is
+  // unavailable or not callable, keep the existing Puter path as a safe fallback.
+  try {
+    const tools = await loadCodingFleetTools();
+    if (tools.length > 0) {
+      const history = (data.history ?? []).slice(-8)
+        .map((turn) => `${turn.role}: ${typeof turn.content === "string" ? turn.content : JSON.stringify(turn.content)}`)
+        .join("\n");
+      const prompt = [
+        `System instructions:\n${systemPrompt}`,
+        history ? `Conversation history:\n${history}` : "",
+        `Current user request:\n${userMessage}`,
+      ].filter(Boolean).join("\n\n");
+      const fleet = await callWithFallback(prompt, tools, data.modelId ? [data.modelId, "gpt-4o", "gemini-2.5-pro"] : undefined);
+      if (fleet.ok) {
+        onDelta?.(fleet.text);
+        return { ok: true, text: fleet.text, model: fleet.model };
+      }
+    }
+  } catch {
+    // Fall through to the existing Puter path; tool-catalog failure must not break chat.
+  }
+
+  return chatWithPuter({
     messages: [
-      { role: "system", content: SYSTEM_PROMPTS[data.mode as keyof typeof SYSTEM_PROMPTS] ?? SYSTEM_PROMPTS.chat },
+      { role: "system", content: systemPrompt },
       ...(data.history ?? []).slice(-8),
-      { role: "user", content: buildUserMessage(data, githubContext) },
+      { role: "user", content: userMessage },
     ],
     model: data.modelId || "gpt-5.6-luna",
     onDelta,
   });
-  return result;
 }
