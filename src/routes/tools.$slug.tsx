@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
 import { ToolWorkspace } from "@/components/tool-workspace";
+import { UnitTestGenerator } from "@/components/unit-test-generator";
 import { Button } from "@/components/ui/button";
 import { toolBySlug } from "@/lib/catalog";
 
@@ -24,5 +25,6 @@ function ToolPage() {
       </AppShell>
     );
   }
+  if (slug === "tests") return <UnitTestGenerator />;
   return <ToolWorkspace tool={tool} />;
 }
