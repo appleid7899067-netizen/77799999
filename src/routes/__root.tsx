@@ -12,10 +12,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Bossnu CodingFleet" },
+      { title: APP_NAME },
       {
         name: "description",
-        content: `${MOTTO_EN} Coding copilot with Puter login and 500+ free models.`,
+        content: `${MOTTO_EN} AI coding assistant for Bossnu SlieLo.`,
       },
       { name: "theme-color", content: "#0b0c0e" },
     ],
@@ -33,7 +33,7 @@ export const Route = createRootRoute({
     ],
   }),
   component: () => (
-    <html lang="en" className="antialiased" suppressHydrationWarning>
+    <html lang="th" className="antialiased" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
