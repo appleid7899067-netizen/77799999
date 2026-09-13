@@ -29,10 +29,10 @@ Never claim an action was completed unless a GitHub tool result confirms it.
 Available command formats:
 - github: status owner/repo
 - github: read owner/repo/path/to/file [ref]
-- github: write owner/repo/path/to/file <commit message>\\n---\\n<complete new file content>
+- github: write owner/repo/path/to/file <commit message>\n---\n<complete new file content>
 - github: branch owner/repo new-branch [from-branch]
-- github: pr owner/repo head-branch base-branch <title>\\n<body>
-- github: issue owner/repo <title>\\n<body>
+- github: pr owner/repo head-branch base-branch <title>\n<body>
+- github: issue owner/repo <title>\n<body>
 - github: actions owner/repo [branch]
 - github: workflow owner/repo workflow-file-or-id [branch]
 These commands execute on the server with the installed GitHub App permissions.
@@ -96,13 +96,11 @@ async function runGitHubCommand(prompt: string): Promise<string | undefined> {
     const owner = parts.shift();
     const repo = parts.shift();
     const path = parts.join("/");
-    if (!owner || !repo || !path) throw new Error("Use: github: write owner/repo/path/to/file <message>\\n---\\n<content>");
+    if (!owner || !repo || !path) throw new Error("Use: github: write owner/repo/path/to/file <message>\n---\n<content>");
     const { first: message, body: content } = splitBody(write[2]);
-    if (!content) throw new Error("GitHub write needs complete file content after \\n---\\n");
+    if (!content) throw new Error("GitHub write needs complete file content after ---");
     const current = await readGitHubFile({ data: { owner, repo, path } }).catch(() => null);
-    const result = await writeGitHubFile({
-      data: { owner, repo, path, content, message: message || "Update from Bossnu SlieLo bot", ...(current?.sha ? { sha: current.sha } : {}) },
-    });
+    const result = await writeGitHubFile({ data: { owner, repo, path, content, message: message || "Update from Bossnu SlieLo bot", ...(current?.sha ? { sha: current.sha } : {}) } });
     return JSON.stringify({ action: "write", repository: `${owner}/${repo}`, path, result }, null, 2);
   }
 
@@ -116,7 +114,7 @@ async function runGitHubCommand(prompt: string): Promise<string | undefined> {
   const pr = prompt.match(/^github:\s*pr\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+([\s\S]+)$/i);
   if (pr) {
     const [owner, repo] = pr[1].split("/");
-    if (!owner || !repo) throw new Error("Use: github: pr owner/repo head-branch base-branch <title>\\n<body>");
+    if (!owner || !repo) throw new Error("Use: github: pr owner/repo head-branch base-branch <title>\n<body>");
     const { first: title, body } = splitBody(pr[4]);
     return JSON.stringify(await createGitHubPullRequest({ data: { owner, repo, head: pr[2], base: pr[3], title, ...(body ? { body } : {}) } }), null, 2);
   }
@@ -124,7 +122,7 @@ async function runGitHubCommand(prompt: string): Promise<string | undefined> {
   const issue = prompt.match(/^github:\s*issue\s+([^\s]+)\s+([\s\S]+)$/i);
   if (issue) {
     const [owner, repo] = issue[1].split("/");
-    if (!owner || !repo) throw new Error("Use: github: issue owner/repo <title>\\n<body>");
+    if (!owner || !repo) throw new Error("Use: github: issue owner/repo <title>\n<body>");
     const { first: title, body } = splitBody(issue[2]);
     return JSON.stringify(await createGitHubIssue({ data: { owner, repo, title, ...(body ? { body } : {}) } }), null, 2);
   }
@@ -155,9 +153,7 @@ function extractJson(text: string): AutoPlan {
   const end = cleaned.lastIndexOf("}");
   if (start < 0 || end <= start) throw new Error("Autonomous agent did not return a valid edit plan");
   const parsed = JSON.parse(cleaned.slice(start, end + 1)) as AutoPlan;
-  if (!parsed || typeof parsed.summary !== "string" || !Array.isArray(parsed.files)) {
-    throw new Error("Autonomous agent returned an invalid edit plan");
-  }
+  if (!parsed || typeof parsed.summary !== "string" || !Array.isArray(parsed.files)) throw new Error("Autonomous agent returned an invalid edit plan");
   return parsed;
 }
 
@@ -166,16 +162,14 @@ function safeAutoPath(path: string) {
 }
 
 async function readAutonomousSnapshot() {
-  const results = await Promise.all(
-    AUTONOMOUS_FILES.map(async (path) => {
-      try {
-        const file = await readGitHubFile({ data: { owner: "appleid7899067-netizen", repo: "Bosses", path } });
-        return `===== ${path} =====\n${(file.content ?? "").slice(0, 14000)}`;
-      } catch {
-        return `===== ${path} =====\n[not found or not readable]`;
-      }
-    }),
-  );
+  const results = await Promise.all(AUTONOMOUS_FILES.map(async (path) => {
+    try {
+      const file = await readGitHubFile({ data: { owner: "appleid7899067-netizen", repo: "Bosses", path } });
+      return `===== ${path} =====\n${(file.content ?? "").slice(0, 14000)}`;
+    } catch {
+      return `===== ${path} =====\n[not found or not readable]`;
+    }
+  }));
   return results.join("\n\n");
 }
 
@@ -187,79 +181,60 @@ async function runAutonomousAgent(data: FleetRequest, onDelta?: (full: string) =
   const snapshot = await readAutonomousSnapshot();
   const plannerPrompt = `คุณคือ Autonomous Coding Agent ของ Bossnu SlieLo. งานนี้ต้องลงมือแก้จริงใน GitHub repo ${AUTONOMOUS_REPO} ไม่ใช่แค่แนะนำ.\n\nงานของผู้ใช้:\n${task}\n\nสถานะ repo:\n${JSON.stringify(repoStatus)}\n\nไฟล์ที่อ่านได้:\n${snapshot}\n\nกติกา:\n1. วิเคราะห์โค้ดก่อนแก้.\n2. ส่งกลับ JSON เท่านั้น รูปแบบ {"summary":"...","files":[{"path":"...","content":"...","message":"..."}]}.\n3. content ต้องเป็นเนื้อหาไฟล์ฉบับเต็มที่พร้อมเขียนทับ ไม่ใช่ diff.\n4. แก้เฉพาะไฟล์ที่จำเป็น.\n5. ห้ามสร้าง path นอก repo, ห้ามใช้ .. หรือ absolute path.\n6. ห้ามแตะ secrets, .env, private keys หรือ credential.\n7. ถ้าไม่จำเป็นต้องแก้ไฟล์ ให้ files เป็น [].\n8. ต้องรักษาโค้ดเดิมและแก้เฉพาะสิ่งที่งานร้องขอ.\n9. ถ้างานพูดถึง deploy ให้แก้และ commit ลง default branch; Vercel/GitHub integration จะเป็นผู้ deploy ต่อ.\n10. ตรวจ syntax/typing จากโค้ดที่เห็นก่อนส่ง.`;
 
-  const planResult = await chatWithPuter({
-    messages: [
-      { role: "system", content: "You are a precise autonomous software engineer. Return valid JSON only when asked." },
-      { role: "user", content: plannerPrompt.slice(0, 60000) },
-    ],
-    model: data.modelId || "gpt-5.6-luna",
-  });
+  const planResult = await chatWithPuter({ messages: [
+    { role: "system", content: "You are a precise autonomous software engineer. Return valid JSON only when asked." },
+    { role: "user", content: plannerPrompt.slice(0, 60000) },
+  ], model: data.modelId || "gpt-5.6-luna" });
   if (!planResult.ok) return planResult;
 
   let plan: AutoPlan;
-  try {
-    plan = extractJson(planResult.text);
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Invalid autonomous plan" };
-  }
+  try { plan = extractJson(planResult.text); }
+  catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Invalid autonomous plan" }; }
 
-  const edits = plan.files.slice(0, 6).filter((file) => safeAutoPath(file.path) && typeof file.content === "string" && file.content.length <= 2_000_000);
-  if (edits.length !== plan.files.length) {
-    return { ok: false, error: "Autonomous plan contained an unsafe or oversized file edit; no files were written." };
-  }
+  if (plan.files.length > 6) return { ok: false, error: "Autonomous plan contains more than 6 file edits; no files were written." };
+  const edits = plan.files.filter((file) => safeAutoPath(file.path) && typeof file.content === "string" && file.content.length <= 2_000_000);
+  if (edits.length !== plan.files.length) return { ok: false, error: "Autonomous plan contained an unsafe or oversized file edit; no files were written." };
 
   const changed: string[] = [];
   for (const edit of edits) {
     const current = await readGitHubFile({ data: { owner: "appleid7899067-netizen", repo: "Bosses", path: edit.path } }).catch(() => null);
-    const result = await writeGitHubFile({
-      data: {
-        owner: "appleid7899067-netizen",
-        repo: "Bosses",
-        path: edit.path,
-        content: edit.content,
-        message: (edit.message || `Bossnu SlieLo: ${task}`).slice(0, 200),
-        ...(current?.sha ? { sha: current.sha } : {}),
-      },
-    });
+    const result = await writeGitHubFile({ data: {
+      owner: "appleid7899067-netizen", repo: "Bosses", path: edit.path, content: edit.content,
+      message: (edit.message || `Bossnu SlieLo: ${task}`).slice(0, 200),
+      ...(current?.sha ? { sha: current.sha } : {}),
+    } });
     changed.push(`${edit.path} (${result?.commit?.sha ? result.commit.sha.slice(0, 7) : "committed"})`);
   }
 
-  const actions = await getGitHubActions({ data: { owner: "appleid7899067-netizen", repo: "Bosses" } }).catch((error) => ({
-    total_count: 0,
-    workflow_runs: [],
-    error: error instanceof Error ? error.message : "Actions check failed",
-  }));
+  const actions = await getGitHubActions({ data: { owner: "appleid7899067-netizen", repo: "Bosses" } }).catch((error) => ({ total_count: 0, workflow_runs: [], error: error instanceof Error ? error.message : "Actions check failed" }));
   const latest = actions.workflow_runs?.slice(0, 3) ?? [];
   const final = [
     `ทำงานอัตโนมัติเสร็จ: ${plan.summary}`,
     changed.length ? `ไฟล์ที่ commit: ${changed.join(", ")}` : "ไม่มีไฟล์ที่ต้องแก้",
-    latest.length
-      ? `GitHub Actions ล่าสุด: ${latest.map((run) => `${run.name}: ${run.status}/${run.conclusion ?? "pending"}`).join(" | ")}`
-      : "ยังไม่พบ GitHub Actions run ใหม่",
+    latest.length ? `GitHub Actions ล่าสุด: ${latest.map((run) => `${run.name}: ${run.status}/${run.conclusion ?? "pending"}`).join(" | ")}` : "ยังไม่พบ GitHub Actions run ใหม่",
     "ถ้า repo ต่อกับ Vercel การ push นี้จะเป็นตัวกระตุ้น deployment ตามการตั้งค่าของ Vercel",
   ].join("\n");
   onDelta?.(final);
   return { ok: true, text: final, model: data.modelId || "gpt-5.6-luna" };
 }
 
+function isAutonomousRequest(prompt: string) {
+  const p = prompt.trim();
+  if (/^ทำเลย\s*:/i.test(p)) return true;
+  return /(ตรวจเว็บ|ตรวจโปรเจกต์|ตรวจทั้งโปรเจกต์|แก้.*deploy|deploy.*ไม่ผ่าน|deploy.*ไม่สำเร็จ|deployment.*error|build.*ไม่ผ่าน|build.*พัง|แก้.*500|error.*deploy)/i.test(p);
+}
+
 export async function runFleet(data: FleetRequest, onDelta?: (full: string) => void): Promise<ChatResult> {
   const system = SYSTEM_PROMPTS[data.mode] ?? SYSTEM_PROMPTS.chat;
   if (!data.prompt.trim()) return { ok: false, error: "Write a prompt or paste some code first." };
-
-  if (/^\s*ทำเลย\s*:/i.test(data.prompt)) {
-    try {
-      return await runAutonomousAgent(data, onDelta);
-    } catch (error) {
-      return { ok: false, error: error instanceof Error ? error.message : "Autonomous GitHub action failed" };
-    }
+  if (isAutonomousRequest(data.prompt)) {
+    try { return await runAutonomousAgent(data, onDelta); }
+    catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Autonomous GitHub action failed" }; }
   }
 
   let githubContext: string | undefined;
-  try {
-    githubContext = await runGitHubCommand(data.prompt);
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "GitHub action failed" };
-  }
+  try { githubContext = await runGitHubCommand(data.prompt); }
+  catch (error) { return { ok: false, error: error instanceof Error ? error.message : "GitHub action failed" }; }
 
   const user = buildUserMessage(data, githubContext);
   const history = (data.history ?? []).slice(-10);
@@ -268,6 +243,5 @@ export async function runFleet(data: FleetRequest, onDelta?: (full: string) => v
     ...history,
     { role: "user", content: user.slice(0, 24000) },
   ];
-
   return chatWithPuter({ messages, model: data.modelId || "gpt-5.6-luna", onDelta });
 }
