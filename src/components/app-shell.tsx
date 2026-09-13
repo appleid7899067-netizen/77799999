@@ -197,7 +197,7 @@ function Footer() {
           <Logo />
           <p className="mt-3 text-sm text-muted">{MOTTO_TH}</p>
           <p className="mt-1 text-sm text-subtle">
-            {APP_NAME}. Sign in with Puter. Run free models. Ship the fix.
+            {APP_NAME}. ผู้ช่วย AI ของผู้บริหาร Bossnu SlieLo — Sign in with Puter. Run free models. Ship the fix.
           </p>
         </div>
         <div>
@@ -270,7 +270,7 @@ function Footer() {
       </div>
       <div className="border-t border-border">
         <p className="mx-auto max-w-6xl px-4 py-4 text-xs text-subtle">
-          Models run through Puter. Threads stay in this browser.
+          Bossnu SlieLo · ผู้บริหารและผู้ดูแลระบบ · Models run through Puter. Threads stay in this browser.
         </p>
       </div>
     </footer>
