@@ -17,6 +17,27 @@ import { useFleet } from "@/lib/store";
 
 export const Route = createFileRoute("/chat")({ component: ChatPage });
 
+const DEFAULT_GITHUB_REPO = "appleid7899067-netizen/Bosses";
+
+function normalizeToolPrompt(text: string, mcp: string[]) {
+  if (!mcp.includes("github")) return text;
+  const p = text.trim();
+  if (/^github:\s*/i.test(p)) return p;
+
+  const repo = p.match(/(?:repo|repository)\s+([\w.-]+\/[\w.-]+)/i)?.[1] ?? DEFAULT_GITHUB_REPO;
+  if (/^(?:ตรวจ|เช็ค|ดู|show|check)\b.*(?:repo|repository|github|สถานะ)/i.test(p) || /(?:github|repo).*(?:status|สถานะ)/i.test(p)) {
+    return `github: status ${repo}`;
+  }
+  if (/(?:actions|workflow|ci|github actions|การทำงานล่าสุด)/i.test(p)) {
+    return `github: actions ${repo}`;
+  }
+  const read = p.match(/(?:อ่าน|เปิด|read|open)\s+(?:ไฟล์|file)?\s*([\w./-]+)(?:\s+(?:ref|branch)\s+([\w./-]+))?/i);
+  if (read) {
+    return `github: read ${repo}/${read[1]}${read[2] ? ` ${read[2]}` : ""}`;
+  }
+  return text;
+}
+
 function ChatPage() {
   const threads = useFleet((s) => s.threads);
   const activeThreadId = useFleet((s) => s.activeThreadId);
@@ -57,7 +78,7 @@ function ChatPage() {
         return;
       }
     }
-    const text = draft.trim();
+    const text = normalizeToolPrompt(draft.trim(), thread.mcp);
     setDraft("");
     appendMessage(thread.id, { role: "user", content: text });
     setBusy(true);
@@ -257,6 +278,7 @@ function ChatPage() {
                     key={s.id}
                     type="button"
                     onClick={() => toggleMcp(thread.id, s.id)}
+                    title={s.id === "github" ? "GitHub is live: use 'ตรวจ repo' or 'github: status owner/repo'" : s.blurb}
                     className={`rounded-full px-2 py-0.5 text-xs ${
                       thread.mcp.includes(s.id) ? "bg-primary/15 text-primary" : "bg-elevated text-subtle"
                     }`}
