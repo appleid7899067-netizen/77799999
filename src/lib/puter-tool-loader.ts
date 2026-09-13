@@ -25,7 +25,8 @@ type PuterFunctionTool = {
 };
 
 const TOOLS_URL = "https://www.codingfleet.com/api/tools";
-const TOOL_LIMIT = 12;
+// Expose up to 20 real CodingFleet tools to the model in one tool-calling turn.
+const TOOL_LIMIT = 20;
 const DEFAULT_MODELS = ["gpt-5.6-luna", "claude-sonnet-4-6", "gemini-3.1-flash-lite"] as const;
 const CODINGFLEET_BASE = "https://www.codingfleet.com/api";
 let cachedTools: CodingFleetTool[] | null = null;
