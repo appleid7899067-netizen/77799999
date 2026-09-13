@@ -7,10 +7,6 @@ import { PuterGate, PuterModelList } from "@/components/PuterGate";
 import { usePuter } from "@/lib/puter-context";
 import { toast } from "sonner";
 
-// The route generator adds /plugins to routeTree.gen.ts during the build. The cast keeps
-// standalone typecheck green before the generated tree is refreshed.
-export const Route = createFileRoute("/plugins" as never)({ component: PluginsPage });
-
 type Plugin = { name: string; description: string; kind: string; icon: LucideIcon; action: "google" | "github" | "vercel" | "external"; url?: string };
 const plugins: Plugin[] = [
   { name: "Google", description: "บัญชี Google สำหรับการเข้าสู่ระบบของ Bossnu SlieLo", kind: "Identity", icon: Globe2, action: "google" },
@@ -21,6 +17,8 @@ const plugins: Plugin[] = [
   { name: "Neon", description: "เชื่อมต่อ PostgreSQL ของ Neon", kind: "Platform", icon: Sparkles, action: "external", url: "https://neon.tech/" },
   { name: "Base44", description: "เปิดพื้นที่เชื่อมต่อสำหรับ Base44 ตามบัญชีของคุณ", kind: "Platform", icon: Sparkles, action: "external", url: "https://base44.com/" },
 ];
+
+export const Route = createFileRoute("/plugins")({ component: PluginsPage });
 
 function PluginsPage() {
   const { signedIn, signIn, user } = usePuter();
