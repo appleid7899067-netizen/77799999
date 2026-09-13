@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -16,7 +17,7 @@
   --color-ok: #7aaf8c;
   --color-info: #7aa4c4;
 
-  --font-sans: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Sora", "Prompt", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
 
   --radius-xs: 4px;
