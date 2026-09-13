@@ -20,74 +20,24 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as RoutinesRouteImport } from './routes/routines'
 import { Route as RunnerRouteImport } from './routes/runner'
 import { Route as SandboxRouteImport } from './routes/sandbox'
+import { Route as PluginsRouteImport } from './routes/plugins'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as ToolsSlugRouteImport } from './routes/tools.$slug'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AgentsRoute = AgentsRouteImport.update({
-  id: '/agents',
-  path: '/agents',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChatRoute = ChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocsRoute = DocsRouteImport.update({
-  id: '/docs',
-  path: '/docs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoryRoute = HistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ModelsRoute = ModelsRouteImport.update({
-  id: '/models',
-  path: '/models',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RoutinesRoute = RoutinesRouteImport.update({
-  id: '/routines',
-  path: '/routines',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RunnerRoute = RunnerRouteImport.update({
-  id: '/runner',
-  path: '/runner',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SandboxRoute = SandboxRouteImport.update({
-  id: '/sandbox',
-  path: '/sandbox',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocsSlugRoute = DocsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => DocsRoute,
-} as any)
-const ToolsSlugRoute = ToolsSlugRouteImport.update({
-  id: '/tools/$slug',
-  path: '/tools/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const IndexRoute = IndexRouteImport.update({ id: '/', path: '/', getParentRoute: () => rootRouteImport } as any)
+const AgentsRoute = AgentsRouteImport.update({ id: '/agents', path: '/agents', getParentRoute: () => rootRouteImport } as any)
+const ChatRoute = ChatRouteImport.update({ id: '/chat', path: '/chat', getParentRoute: () => rootRouteImport } as any)
+const ContactRoute = ContactRouteImport.update({ id: '/contact', path: '/contact', getParentRoute: () => rootRouteImport } as any)
+const DocsRoute = DocsRouteImport.update({ id: '/docs', path: '/docs', getParentRoute: () => rootRouteImport } as any)
+const HistoryRoute = HistoryRouteImport.update({ id: '/history', path: '/history', getParentRoute: () => rootRouteImport } as any)
+const ModelsRoute = ModelsRouteImport.update({ id: '/models', path: '/models', getParentRoute: () => rootRouteImport } as any)
+const PricingRoute = PricingRouteImport.update({ id: '/pricing', path: '/pricing', getParentRoute: () => rootRouteImport } as any)
+const RoutinesRoute = RoutinesRouteImport.update({ id: '/routines', path: '/routines', getParentRoute: () => rootRouteImport } as any)
+const RunnerRoute = RunnerRouteImport.update({ id: '/runner', path: '/runner', getParentRoute: () => rootRouteImport } as any)
+const SandboxRoute = SandboxRouteImport.update({ id: '/sandbox', path: '/sandbox', getParentRoute: () => rootRouteImport } as any)
+const PluginsRoute = PluginsRouteImport.update({ id: '/plugins', path: '/plugins', getParentRoute: () => rootRouteImport } as any)
+const DocsSlugRoute = DocsSlugRouteImport.update({ id: '/$slug', path: '/$slug', getParentRoute: () => DocsRoute } as any)
+const ToolsSlugRoute = ToolsSlugRouteImport.update({ id: '/tools/$slug', path: '/tools/$slug', getParentRoute: () => rootRouteImport } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/routines': typeof RoutinesRoute
   '/runner': typeof RunnerRoute
   '/sandbox': typeof SandboxRoute
+  '/plugins': typeof PluginsRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/tools/$slug': typeof ToolsSlugRoute
 }
@@ -116,6 +67,7 @@ export interface FileRoutesByTo {
   '/routines': typeof RoutinesRoute
   '/runner': typeof RunnerRoute
   '/sandbox': typeof SandboxRoute
+  '/plugins': typeof PluginsRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/tools/$slug': typeof ToolsSlugRoute
 }
@@ -132,6 +84,7 @@ export interface FileRoutesById {
   '/routines': typeof RoutinesRoute
   '/runner': typeof RunnerRoute
   '/sandbox': typeof SandboxRoute
+  '/plugins': typeof PluginsRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/tools/$slug': typeof ToolsSlugRoute
 }
@@ -149,6 +102,7 @@ export interface FileRouteTypes {
     | '/routines'
     | '/runner'
     | '/sandbox'
+    | '/plugins'
     | '/docs/$slug'
     | '/tools/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -164,6 +118,7 @@ export interface FileRouteTypes {
     | '/routines'
     | '/runner'
     | '/sandbox'
+    | '/plugins'
     | '/docs/$slug'
     | '/tools/$slug'
   id:
@@ -179,6 +134,7 @@ export interface FileRouteTypes {
     | '/routines'
     | '/runner'
     | '/sandbox'
+    | '/plugins'
     | '/docs/$slug'
     | '/tools/$slug'
   fileRoutesById: FileRoutesById
@@ -195,132 +151,49 @@ export interface RootRouteChildren {
   RoutinesRoute: typeof RoutinesRoute
   RunnerRoute: typeof RunnerRoute
   SandboxRoute: typeof SandboxRoute
+  PluginsRoute: typeof PluginsRoute
   ToolsSlugRoute: typeof ToolsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/agents': {
-      id: '/agents'
-      path: '/agents'
-      fullPath: '/agents'
-      preLoaderRoute: typeof AgentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chat': {
-      id: '/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof ChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/docs': {
-      id: '/docs'
-      path: '/docs'
-      fullPath: '/docs'
-      preLoaderRoute: typeof DocsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/history': {
-      id: '/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof HistoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/models': {
-      id: '/models'
-      path: '/models'
-      fullPath: '/models'
-      preLoaderRoute: typeof ModelsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/routines': {
-      id: '/routines'
-      path: '/routines'
-      fullPath: '/routines'
-      preLoaderRoute: typeof RoutinesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/runner': {
-      id: '/runner'
-      path: '/runner'
-      fullPath: '/runner'
-      preLoaderRoute: typeof RunnerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sandbox': {
-      id: '/sandbox'
-      path: '/sandbox'
-      fullPath: '/sandbox'
-      preLoaderRoute: typeof SandboxRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/docs/$slug': {
-      id: '/docs/$slug'
-      path: '/$slug'
-      fullPath: '/docs/$slug'
-      preLoaderRoute: typeof DocsSlugRouteImport
-      parentRoute: typeof DocsRoute
-    }
-    '/tools/$slug': {
-      id: '/tools/$slug'
-      path: '/tools/$slug'
-      fullPath: '/tools/$slug'
-      preLoaderRoute: typeof ToolsSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    '/': { id: '/'; path: '/'; fullPath: '/'; preLoaderRoute: typeof IndexRouteImport; parentRoute: typeof rootRouteImport }
+    '/agents': { id: '/agents'; path: '/agents'; fullPath: '/agents'; preLoaderRoute: typeof AgentsRouteImport; parentRoute: typeof rootRouteImport }
+    '/chat': { id: '/chat'; path: '/chat'; fullPath: '/chat'; preLoaderRoute: typeof ChatRouteImport; parentRoute: typeof rootRouteImport }
+    '/contact': { id: '/contact'; path: '/contact'; fullPath: '/contact'; preLoaderRoute: typeof ContactRouteImport; parentRoute: typeof rootRouteImport }
+    '/docs': { id: '/docs'; path: '/docs'; fullPath: '/docs'; preLoaderRoute: typeof DocsRouteImport; parentRoute: typeof rootRouteImport }
+    '/history': { id: '/history'; path: '/history'; fullPath: '/history'; preLoaderRoute: typeof HistoryRouteImport; parentRoute: typeof rootRouteImport }
+    '/models': { id: '/models'; path: '/models'; fullPath: '/models'; preLoaderRoute: typeof ModelsRouteImport; parentRoute: typeof rootRouteImport }
+    '/pricing': { id: '/pricing'; path: '/pricing'; fullPath: '/pricing'; preLoaderRoute: typeof PricingRouteImport; parentRoute: typeof rootRouteImport }
+    '/routines': { id: '/routines'; path: '/routines'; fullPath: '/routines'; preLoaderRoute: typeof RoutinesRouteImport; parentRoute: typeof rootRouteImport }
+    '/runner': { id: '/runner'; path: '/runner'; fullPath: '/runner'; preLoaderRoute: typeof RunnerRouteImport; parentRoute: typeof rootRouteImport }
+    '/sandbox': { id: '/sandbox'; path: '/sandbox'; fullPath: '/sandbox'; preLoaderRoute: typeof SandboxRouteImport; parentRoute: typeof rootRouteImport }
+    '/plugins': { id: '/plugins'; path: '/plugins'; fullPath: '/plugins'; preLoaderRoute: typeof PluginsRouteImport; parentRoute: typeof rootRouteImport }
+    '/docs/$slug': { id: '/docs/$slug'; path: '/$slug'; fullPath: '/docs/$slug'; preLoaderRoute: typeof DocsSlugRouteImport; parentRoute: typeof DocsRoute }
+    '/tools/$slug': { id: '/tools/$slug'; path: '/tools/$slug'; fullPath: '/tools/$slug'; preLoaderRoute: typeof ToolsSlugRouteImport; parentRoute: typeof rootRouteImport }
   }
 }
 
-interface DocsRouteChildren {
-  DocsSlugRoute: typeof DocsSlugRoute
-}
-
-const DocsRouteChildren: DocsRouteChildren = {
-  DocsSlugRoute: DocsSlugRoute,
-}
-
+interface DocsRouteChildren { DocsSlugRoute: typeof DocsSlugRoute }
+const DocsRouteChildren: DocsRouteChildren = { DocsSlugRoute: DocsSlugRoute }
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AgentsRoute: AgentsRoute,
-  ChatRoute: ChatRoute,
-  ContactRoute: ContactRoute,
+  IndexRoute,
+  AgentsRoute,
+  ChatRoute,
+  ContactRoute,
   DocsRoute: DocsRouteWithChildren,
-  HistoryRoute: HistoryRoute,
-  ModelsRoute: ModelsRoute,
-  PricingRoute: PricingRoute,
-  RoutinesRoute: RoutinesRoute,
-  RunnerRoute: RunnerRoute,
-  SandboxRoute: SandboxRoute,
-  ToolsSlugRoute: ToolsSlugRoute,
+  HistoryRoute,
+  ModelsRoute,
+  PricingRoute,
+  RoutinesRoute,
+  RunnerRoute,
+  SandboxRoute,
+  PluginsRoute,
+  ToolsSlugRoute,
 }
-export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
 import type { createStart } from '@tanstack/react-start'
