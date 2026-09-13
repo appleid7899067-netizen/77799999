@@ -67,6 +67,13 @@ async function getInstallationToken(owner: string, repo: string): Promise<string
   return token.data.token;
 }
 
+function contentPath(owner: string, repo: string, path: string) {
+  return `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`;
+}
+
 export async function githubGetFile(input: {
   owner: string;
   repo: string;
@@ -83,14 +90,7 @@ export async function githubGetFile(input: {
     encoding?: string;
     type: string;
     html_url?: string;
-  }>(
-    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/contents/${input.path
-      .split("/")
-      .map(encodeURIComponent)
-      .join("/")}${ref}`,
-    {},
-    token,
-  );
+  }>(`${contentPath(input.owner, input.repo, input.path)}${ref}`, {}, token);
   const content = result.data.content
     ? Buffer.from(result.data.content.replace(/\n/g, ""), "base64").toString("utf8")
     : undefined;
@@ -110,22 +110,15 @@ export async function githubWriteFile(input: {
   const result = await github<{
     content?: { path?: string; sha?: string; html_url?: string };
     commit?: { sha?: string; html_url?: string; message?: string };
-  }>(
-    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/contents/${input.path
-      .split("/")
-      .map(encodeURIComponent)
-      .join("/")}`,
-    {
-      method: "PUT",
-      body: JSON.stringify({
-        message: input.message,
-        content: Buffer.from(input.content, "utf8").toString("base64"),
-        ...(input.sha ? { sha: input.sha } : {}),
-        ...(input.branch ? { branch: input.branch } : {}),
-      }),
-    },
-    token,
-  );
+  }>(contentPath(input.owner, input.repo, input.path), {
+    method: "PUT",
+    body: JSON.stringify({
+      message: input.message,
+      content: Buffer.from(input.content, "utf8").toString("base64"),
+      ...(input.sha ? { sha: input.sha } : {}),
+      ...(input.branch ? { branch: input.branch } : {}),
+    }),
+  }, token);
   return result.data;
 }
 
@@ -136,6 +129,114 @@ export async function githubStatus(owner: string, repo: string) {
     default_branch: string;
     private: boolean;
     html_url: string;
+    description?: string | null;
+    open_issues_count?: number;
   }>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`, {}, token);
   return result.data;
+}
+
+export async function githubCreateBranch(input: {
+  owner: string;
+  repo: string;
+  branch: string;
+  from?: string;
+}) {
+  const token = await getInstallationToken(input.owner, input.repo);
+  const base = input.from || (await githubStatus(input.owner, input.repo)).default_branch;
+  const ref = await github<{ object: { sha: string } }>(
+    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/git/ref/heads/${encodeURIComponent(base)}`,
+    {},
+    token,
+  );
+  const result = await github<{ ref: string; object: { sha: string } }>(
+    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/git/refs`,
+    {
+      method: "POST",
+      body: JSON.stringify({ ref: `refs/heads/${input.branch}`, sha: ref.data.object.sha }),
+    },
+    token,
+  );
+  return { branch: input.branch, from: base, ...result.data };
+}
+
+export async function githubCreatePullRequest(input: {
+  owner: string;
+  repo: string;
+  head: string;
+  base?: string;
+  title: string;
+  body?: string;
+}) {
+  const token = await getInstallationToken(input.owner, input.repo);
+  const base = input.base || (await githubStatus(input.owner, input.repo)).default_branch;
+  const result = await github<{ number: number; html_url: string; title: string; state: string }>(
+    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/pulls`,
+    {
+      method: "POST",
+      body: JSON.stringify({ title: input.title, head: input.head, base, body: input.body || "Created by Bossnu SlieLo bot" }),
+    },
+    token,
+  );
+  return result.data;
+}
+
+export async function githubCreateIssue(input: {
+  owner: string;
+  repo: string;
+  title: string;
+  body?: string;
+}) {
+  const token = await getInstallationToken(input.owner, input.repo);
+  const result = await github<{ number: number; html_url: string; title: string; state: string }>(
+    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/issues`,
+    {
+      method: "POST",
+      body: JSON.stringify({ title: input.title, body: input.body || "Created by Bossnu SlieLo bot" }),
+    },
+    token,
+  );
+  return result.data;
+}
+
+export async function githubActions(input: { owner: string; repo: string; branch?: string }) {
+  const token = await getInstallationToken(input.owner, input.repo);
+  const result = await github<{
+    total_count: number;
+    workflow_runs: Array<{
+      id: number;
+      name: string;
+      status: string;
+      conclusion: string | null;
+      head_branch: string | null;
+      html_url: string;
+      created_at: string;
+    }>;
+  }>(
+    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/actions/runs?per_page=10${
+      input.branch ? `&branch=${encodeURIComponent(input.branch)}` : ""
+    }`,
+    {},
+    token,
+  );
+  return result.data;
+}
+
+export async function githubDispatchWorkflow(input: {
+  owner: string;
+  repo: string;
+  workflow: string;
+  branch?: string;
+  inputs?: Record<string, string>;
+}) {
+  const token = await getInstallationToken(input.owner, input.repo);
+  const branch = input.branch || (await githubStatus(input.owner, input.repo)).default_branch;
+  await github(
+    `/repos/${encodeURIComponent(input.owner)}/${encodeURIComponent(input.repo)}/actions/workflows/${encodeURIComponent(input.workflow)}/dispatches`,
+    {
+      method: "POST",
+      body: JSON.stringify({ ref: branch, inputs: input.inputs || {} }),
+    },
+    token,
+  );
+  return { workflow: input.workflow, branch, dispatched: true };
 }
