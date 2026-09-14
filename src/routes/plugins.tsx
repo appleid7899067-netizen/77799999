@@ -10,7 +10,7 @@ import { toast } from "sonner";
 type Plugin = { name: string; description: string; kind: string; icon: LucideIcon; action: "google" | "github" | "vercel" | "external"; url?: string };
 const plugins: Plugin[] = [
   { name: "Google", description: "บัญชี Google สำหรับการเข้าสู่ระบบของ Bossnu SlieLo", kind: "Identity", icon: Globe2, action: "google" },
-  { name: "GitHub", description: "เปิดการเข้าสู่ระบบ GitHub และจัดการ repository ผ่าน GitHub", kind: "Developer", icon: Github, action: "github", url: "https://github.com/login" },
+  { name: "GitHub", description: "ติดตั้ง/อนุญาต GitHub Agent77 เพื่ออ่านและเขียน repository ตามสิทธิ์ของ GitHub App", kind: "Developer", icon: Github, action: "github", url: "/api/github/install" },
   { name: "Vercel", description: "เชื่อมต่อ Vercel เพื่อจัดการโปรเจกต์และ deployment", kind: "Platform", icon: Zap, action: "vercel", url: "https://vercel.com/oauth" },
   { name: "Railway", description: "เชื่อมต่อแพลตฟอร์ม deploy ของ Railway", kind: "Platform", icon: Zap, action: "external", url: "https://railway.app/" },
   { name: "Supabase", description: "เชื่อมต่อ database, auth และ storage ของ Supabase", kind: "Platform", icon: Sparkles, action: "external", url: "https://supabase.com/" },
