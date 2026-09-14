@@ -16,28 +16,96 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as ModelsRouteImport } from './routes/models'
+import { Route as PluginsRouteImport } from './routes/plugins'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as RoutinesRouteImport } from './routes/routines'
 import { Route as RunnerRouteImport } from './routes/runner'
 import { Route as SandboxRouteImport } from './routes/sandbox'
-import { Route as PluginsRouteImport } from './routes/plugins'
+import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as ToolsSlugRouteImport } from './routes/tools.$slug'
+import { Route as ApiGithubInstallRouteImport } from './routes/api/github/install'
 
-const IndexRoute = IndexRouteImport.update({ id: '/', path: '/', getParentRoute: () => rootRouteImport } as any)
-const AgentsRoute = AgentsRouteImport.update({ id: '/agents', path: '/agents', getParentRoute: () => rootRouteImport } as any)
-const ChatRoute = ChatRouteImport.update({ id: '/chat', path: '/chat', getParentRoute: () => rootRouteImport } as any)
-const ContactRoute = ContactRouteImport.update({ id: '/contact', path: '/contact', getParentRoute: () => rootRouteImport } as any)
-const DocsRoute = DocsRouteImport.update({ id: '/docs', path: '/docs', getParentRoute: () => rootRouteImport } as any)
-const HistoryRoute = HistoryRouteImport.update({ id: '/history', path: '/history', getParentRoute: () => rootRouteImport } as any)
-const ModelsRoute = ModelsRouteImport.update({ id: '/models', path: '/models', getParentRoute: () => rootRouteImport } as any)
-const PricingRoute = PricingRouteImport.update({ id: '/pricing', path: '/pricing', getParentRoute: () => rootRouteImport } as any)
-const RoutinesRoute = RoutinesRouteImport.update({ id: '/routines', path: '/routines', getParentRoute: () => rootRouteImport } as any)
-const RunnerRoute = RunnerRouteImport.update({ id: '/runner', path: '/runner', getParentRoute: () => rootRouteImport } as any)
-const SandboxRoute = SandboxRouteImport.update({ id: '/sandbox', path: '/sandbox', getParentRoute: () => rootRouteImport } as any)
-const PluginsRoute = PluginsRouteImport.update({ id: '/plugins', path: '/plugins', getParentRoute: () => rootRouteImport } as any)
-const DocsSlugRoute = DocsSlugRouteImport.update({ id: '/$slug', path: '/$slug', getParentRoute: () => DocsRoute } as any)
-const ToolsSlugRoute = ToolsSlugRouteImport.update({ id: '/tools/$slug', path: '/tools/$slug', getParentRoute: () => rootRouteImport } as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsRoute = AgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModelsRoute = ModelsRouteImport.update({
+  id: '/models',
+  path: '/models',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PluginsRoute = PluginsRouteImport.update({
+  id: '/plugins',
+  path: '/plugins',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoutinesRoute = RoutinesRouteImport.update({
+  id: '/routines',
+  path: '/routines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RunnerRoute = RunnerRouteImport.update({
+  id: '/runner',
+  path: '/runner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SandboxRoute = SandboxRouteImport.update({
+  id: '/sandbox',
+  path: '/sandbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpRoute = ApiMcpRouteImport.update({
+  id: '/api/mcp',
+  path: '/api/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsSlugRoute = DocsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => DocsRoute,
+} as any)
+const ToolsSlugRoute = ToolsSlugRouteImport.update({
+  id: '/tools/$slug',
+  path: '/tools/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGithubInstallRoute = ApiGithubInstallRouteImport.update({
+  id: '/api/github/install',
+  path: '/api/github/install',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,13 +115,15 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRouteWithChildren
   '/history': typeof HistoryRoute
   '/models': typeof ModelsRoute
+  '/plugins': typeof PluginsRoute
   '/pricing': typeof PricingRoute
   '/routines': typeof RoutinesRoute
   '/runner': typeof RunnerRoute
   '/sandbox': typeof SandboxRoute
-  '/plugins': typeof PluginsRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/tools/$slug': typeof ToolsSlugRoute
+  '/api/github/install': typeof ApiGithubInstallRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -63,13 +133,15 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRouteWithChildren
   '/history': typeof HistoryRoute
   '/models': typeof ModelsRoute
+  '/plugins': typeof PluginsRoute
   '/pricing': typeof PricingRoute
   '/routines': typeof RoutinesRoute
   '/runner': typeof RunnerRoute
   '/sandbox': typeof SandboxRoute
-  '/plugins': typeof PluginsRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/tools/$slug': typeof ToolsSlugRoute
+  '/api/github/install': typeof ApiGithubInstallRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,13 +152,15 @@ export interface FileRoutesById {
   '/docs': typeof DocsRouteWithChildren
   '/history': typeof HistoryRoute
   '/models': typeof ModelsRoute
+  '/plugins': typeof PluginsRoute
   '/pricing': typeof PricingRoute
   '/routines': typeof RoutinesRoute
   '/runner': typeof RunnerRoute
   '/sandbox': typeof SandboxRoute
-  '/plugins': typeof PluginsRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/tools/$slug': typeof ToolsSlugRoute
+  '/api/github/install': typeof ApiGithubInstallRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,13 +172,15 @@ export interface FileRouteTypes {
     | '/docs'
     | '/history'
     | '/models'
+    | '/plugins'
     | '/pricing'
     | '/routines'
     | '/runner'
     | '/sandbox'
-    | '/plugins'
+    | '/api/mcp'
     | '/docs/$slug'
     | '/tools/$slug'
+    | '/api/github/install'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -114,13 +190,15 @@ export interface FileRouteTypes {
     | '/docs'
     | '/history'
     | '/models'
+    | '/plugins'
     | '/pricing'
     | '/routines'
     | '/runner'
     | '/sandbox'
-    | '/plugins'
+    | '/api/mcp'
     | '/docs/$slug'
     | '/tools/$slug'
+    | '/api/github/install'
   id:
     | '__root__'
     | '/'
@@ -130,13 +208,15 @@ export interface FileRouteTypes {
     | '/docs'
     | '/history'
     | '/models'
+    | '/plugins'
     | '/pricing'
     | '/routines'
     | '/runner'
     | '/sandbox'
-    | '/plugins'
+    | '/api/mcp'
     | '/docs/$slug'
     | '/tools/$slug'
+    | '/api/github/install'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -147,53 +227,163 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRouteWithChildren
   HistoryRoute: typeof HistoryRoute
   ModelsRoute: typeof ModelsRoute
+  PluginsRoute: typeof PluginsRoute
   PricingRoute: typeof PricingRoute
   RoutinesRoute: typeof RoutinesRoute
   RunnerRoute: typeof RunnerRoute
   SandboxRoute: typeof SandboxRoute
-  PluginsRoute: typeof PluginsRoute
+  ApiMcpRoute: typeof ApiMcpRoute
   ToolsSlugRoute: typeof ToolsSlugRoute
+  ApiGithubInstallRoute: typeof ApiGithubInstallRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': { id: '/'; path: '/'; fullPath: '/'; preLoaderRoute: typeof IndexRouteImport; parentRoute: typeof rootRouteImport }
-    '/agents': { id: '/agents'; path: '/agents'; fullPath: '/agents'; preLoaderRoute: typeof AgentsRouteImport; parentRoute: typeof rootRouteImport }
-    '/chat': { id: '/chat'; path: '/chat'; fullPath: '/chat'; preLoaderRoute: typeof ChatRouteImport; parentRoute: typeof rootRouteImport }
-    '/contact': { id: '/contact'; path: '/contact'; fullPath: '/contact'; preLoaderRoute: typeof ContactRouteImport; parentRoute: typeof rootRouteImport }
-    '/docs': { id: '/docs'; path: '/docs'; fullPath: '/docs'; preLoaderRoute: typeof DocsRouteImport; parentRoute: typeof rootRouteImport }
-    '/history': { id: '/history'; path: '/history'; fullPath: '/history'; preLoaderRoute: typeof HistoryRouteImport; parentRoute: typeof rootRouteImport }
-    '/models': { id: '/models'; path: '/models'; fullPath: '/models'; preLoaderRoute: typeof ModelsRouteImport; parentRoute: typeof rootRouteImport }
-    '/pricing': { id: '/pricing'; path: '/pricing'; fullPath: '/pricing'; preLoaderRoute: typeof PricingRouteImport; parentRoute: typeof rootRouteImport }
-    '/routines': { id: '/routines'; path: '/routines'; fullPath: '/routines'; preLoaderRoute: typeof RoutinesRouteImport; parentRoute: typeof rootRouteImport }
-    '/runner': { id: '/runner'; path: '/runner'; fullPath: '/runner'; preLoaderRoute: typeof RunnerRouteImport; parentRoute: typeof rootRouteImport }
-    '/sandbox': { id: '/sandbox'; path: '/sandbox'; fullPath: '/sandbox'; preLoaderRoute: typeof SandboxRouteImport; parentRoute: typeof rootRouteImport }
-    '/plugins': { id: '/plugins'; path: '/plugins'; fullPath: '/plugins'; preLoaderRoute: typeof PluginsRouteImport; parentRoute: typeof rootRouteImport }
-    '/docs/$slug': { id: '/docs/$slug'; path: '/$slug'; fullPath: '/docs/$slug'; preLoaderRoute: typeof DocsSlugRouteImport; parentRoute: typeof DocsRoute }
-    '/tools/$slug': { id: '/tools/$slug'; path: '/tools/$slug'; fullPath: '/tools/$slug'; preLoaderRoute: typeof ToolsSlugRouteImport; parentRoute: typeof rootRouteImport }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents': {
+      id: '/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AgentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/models': {
+      id: '/models'
+      path: '/models'
+      fullPath: '/models'
+      preLoaderRoute: typeof ModelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plugins': {
+      id: '/plugins'
+      path: '/plugins'
+      fullPath: '/plugins'
+      preLoaderRoute: typeof PluginsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/routines': {
+      id: '/routines'
+      path: '/routines'
+      fullPath: '/routines'
+      preLoaderRoute: typeof RoutinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/runner': {
+      id: '/runner'
+      path: '/runner'
+      fullPath: '/runner'
+      preLoaderRoute: typeof RunnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sandbox': {
+      id: '/sandbox'
+      path: '/sandbox'
+      fullPath: '/sandbox'
+      preLoaderRoute: typeof SandboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mcp': {
+      id: '/api/mcp'
+      path: '/api/mcp'
+      fullPath: '/api/mcp'
+      preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/$slug': {
+      id: '/docs/$slug'
+      path: '/$slug'
+      fullPath: '/docs/$slug'
+      preLoaderRoute: typeof DocsSlugRouteImport
+      parentRoute: typeof DocsRoute
+    }
+    '/tools/$slug': {
+      id: '/tools/$slug'
+      path: '/tools/$slug'
+      fullPath: '/tools/$slug'
+      preLoaderRoute: typeof ToolsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/github/install': {
+      id: '/api/github/install'
+      path: '/api/github/install'
+      fullPath: '/api/github/install'
+      preLoaderRoute: typeof ApiGithubInstallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
-interface DocsRouteChildren { DocsSlugRoute: typeof DocsSlugRoute }
-const DocsRouteChildren: DocsRouteChildren = { DocsSlugRoute: DocsSlugRoute }
+interface DocsRouteChildren {
+  DocsSlugRoute: typeof DocsSlugRoute
+}
+
+const DocsRouteChildren: DocsRouteChildren = {
+  DocsSlugRoute: DocsSlugRoute,
+}
+
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute,
-  AgentsRoute,
-  ChatRoute,
-  ContactRoute,
+  IndexRoute: IndexRoute,
+  AgentsRoute: AgentsRoute,
+  ChatRoute: ChatRoute,
+  ContactRoute: ContactRoute,
   DocsRoute: DocsRouteWithChildren,
-  HistoryRoute,
-  ModelsRoute,
-  PricingRoute,
-  RoutinesRoute,
-  RunnerRoute,
-  SandboxRoute,
-  PluginsRoute,
-  ToolsSlugRoute,
+  HistoryRoute: HistoryRoute,
+  ModelsRoute: ModelsRoute,
+  PluginsRoute: PluginsRoute,
+  PricingRoute: PricingRoute,
+  RoutinesRoute: RoutinesRoute,
+  RunnerRoute: RunnerRoute,
+  SandboxRoute: SandboxRoute,
+  ApiMcpRoute: ApiMcpRoute,
+  ToolsSlugRoute: ToolsSlugRoute,
+  ApiGithubInstallRoute: ApiGithubInstallRoute,
 }
-export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>()
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
 import type { createStart } from '@tanstack/react-start'
