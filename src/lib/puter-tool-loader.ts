@@ -23,7 +23,7 @@ type ToolCall = { id?: string; name: string; arguments: Record<string, unknown> 
 type PuterFunctionTool = { type: "function"; function: { name: string; description: string; parameters: Record<string, unknown> } };
 
 const TOOLS_URL = "https://www.codingfleet.com/api/tools";
-const PLUGINS_URL = "https://boss69-l8e13v82g-canthrsngsaengphanuphanth95-1467.vercel.app/plugins";
+const PLUGINS_URL = "https://bosses690.vercel.app/plugins";
 const GITHUB_API = "https://api.github.com";
 const PUBLIC_MCP_SERVERS = ["https://api.keenable.ai/mcp"] as const;
 const TOOL_LIMIT = 20;
@@ -165,26 +165,31 @@ export async function callWithFallback(prompt: string, tools: CodingFleetTool[],
   for (const model of models) {
     try {
       const availableTools = tools.slice(0, TOOL_LIMIT);
-      const system = ["You are Bossnu SlieLo Agentic AI.", "Use supplied CodingFleet, callable public GitHub read tools, live Plugins, and public MCP tools when relevant. Tool calls are real function calls; never invent a tool name or endpoint.", "Do not call plugin_catalog: plugin discovery is best-effort and unavailable catalogs are omitted from the tool list. For GitHub, use github_get_repo or github_get_file for public repositories. GitHub write/private operations require a configured server credential and must not be claimed as available.", "Never invent credentials. If a private credential is missing, identify the exact service and secret/env-var name; never ask the user to paste the secret into ordinary chat.", "Available tools:", toolSummary(availableTools)].join("\n");
+      const system = ["You are Bossnu SlieLo Agent. Use available tools when they materially improve the answer. Never claim an external action succeeded unless the tool returned success.", "Available tools:", toolSummary(availableTools)].join("\n\n");
       const messages: Array<Record<string, unknown>> = [{ role: "system", content: system }, { role: "user", content: prompt }];
-      const executed: ToolCall[] = [];
       for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
-        const current = await chatModel(messages, availableTools, model);
-        if (current.toolCalls.length === 0) { if (!current.text.trim()) throw new Error("Empty model response."); return { ok: true, text: current.text, model, toolCalls: executed }; }
-        const assistantMessage = assistantToolMessage(current.response); if (!assistantMessage) throw new Error("Puter returned tool calls without an assistant message."); messages.push(assistantMessage);
-        for (const call of current.toolCalls) {
-          const tool = availableTools.find((candidate) => toolName(candidate) === call.name); const toolCallId = call.id ?? call.name;
-          if (!tool) { messages.push({ role: "tool", tool_call_id: toolCallId, content: JSON.stringify({ ok: false, error: `Unknown tool: ${call.name}` }) }); continue; }
-          try { const result = await executeTool(tool, call.arguments); executed.push(call); messages.push({ role: "tool", tool_call_id: toolCallId, content: JSON.stringify(result) }); }
-          catch (error) { messages.push({ role: "tool", tool_call_id: toolCallId, content: JSON.stringify({ ok: false, error: error instanceof Error ? error.message : String(error) }) }); }
+        const result = await chatModel(messages, availableTools, model);
+        if (!result.toolCalls.length) return { ok: true, text: result.text, model, toolCalls: [] };
+        const assistantMessage = assistantToolMessage(result.response);
+        if (assistantMessage) messages.push(assistantMessage);
+        for (const call of result.toolCalls) {
+          const tool = availableTools.find((candidate) => toolName(candidate) === call.name);
+          if (!tool) {
+            messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ ok: false, error: `Unknown tool: ${call.name}` }) });
+            continue;
+          }
+          try {
+            const output = await executeTool(tool, call.arguments);
+            messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ ok: true, result: output }) });
+          } catch (error) {
+            messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ ok: false, error: error instanceof Error ? error.message : String(error) }) });
+          }
         }
       }
-      throw new Error(`Tool loop exceeded ${MAX_TOOL_ROUNDS} rounds.`);
-    } catch (error) { lastError = error instanceof Error ? error.message : String(error); }
+      return { ok: true, text: "Agent reached the tool-round limit before producing a final answer.", model, toolCalls: [] };
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
   }
   return { ok: false, error: lastError };
 }
-
-export async function runAgentsParallel(prompt: string, tools: CodingFleetTool[], agents: readonly string[] = ["reviewer", "security", "tester"]): Promise<Array<{ agent: string; ok: boolean; text: string }>> { return Promise.all(agents.map(async (agent) => { try { const result = await callWithFallback(`${prompt}\n\nYou are the @${agent} specialist. Focus only on ${agent} review and actionable output.`, tools); return { agent, ok: result.ok, text: result.ok ? result.text : result.error }; } catch (error) { return { agent, ok: false, text: error instanceof Error ? error.message : String(error) }; } })); }
-
-export type { CodingFleetTool, ToolCall };
