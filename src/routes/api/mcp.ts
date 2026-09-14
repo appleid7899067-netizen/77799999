@@ -29,6 +29,16 @@ function nativeTools(): Tool[] {
       description: "Read recent commits from a public GitHub repository.",
       inputSchema: { type: "object", properties: { owner: { type: "string" }, repo: { type: "string" }, per_page: { type: "integer", minimum: 1, maximum: 20 } }, required: ["owner", "repo"], additionalProperties: false },
     },
+    {
+      name: "github_list_issues",
+      description: "Read issues from a public GitHub repository, including issue metadata and state.",
+      inputSchema: { type: "object", properties: { owner: { type: "string" }, repo: { type: "string" }, state: { type: "string", enum: ["open", "closed", "all"] }, per_page: { type: "integer", minimum: 1, maximum: 30 }, page: { type: "integer", minimum: 1 } }, required: ["owner", "repo"], additionalProperties: false },
+    },
+    {
+      name: "github_list_pull_requests",
+      description: "Read pull requests from a public GitHub repository, including review and merge metadata.",
+      inputSchema: { type: "object", properties: { owner: { type: "string" }, repo: { type: "string" }, state: { type: "string", enum: ["open", "closed", "all"] }, per_page: { type: "integer", minimum: 1, maximum: 30 }, page: { type: "integer", minimum: 1 } }, required: ["owner", "repo"], additionalProperties: false },
+    },
   ];
 }
 
@@ -54,6 +64,12 @@ async function codingFleetTools(): Promise<Tool[]> {
   }
 }
 
+function boundedNumber(value: unknown, fallback: number, min: number, max: number): number {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) return fallback;
+  return parsed;
+}
+
 async function githubCall(name: string, args: Record<string, unknown>): Promise<unknown> {
   const owner = String(args.owner ?? "").trim();
   const repo = String(args.repo ?? "").trim();
@@ -65,8 +81,15 @@ async function githubCall(name: string, args: Record<string, unknown>): Promise<
     path += `/contents/${file.split("/").map(encodeURIComponent).join("/")}`;
     if (args.ref) path += `?ref=${encodeURIComponent(String(args.ref))}`;
   } else if (name === "github_list_commits") {
-    const perPage = Math.min(20, Math.max(1, Number(args.per_page ?? 10)));
+    const perPage = boundedNumber(args.per_page, 10, 1, 20);
     path += `/commits?per_page=${perPage}`;
+  } else if (name === "github_list_issues" || name === "github_list_pull_requests") {
+    const state = String(args.state ?? "open");
+    if (!["open", "closed", "all"].includes(state)) throw new Error("GitHub state must be open, closed, or all.");
+    const perPage = boundedNumber(args.per_page, 20, 1, 30);
+    const page = boundedNumber(args.page, 1, 1, 1000);
+    const resource = name === "github_list_issues" ? "issues" : "pulls";
+    path += `/${resource}?state=${encodeURIComponent(state)}&per_page=${perPage}&page=${page}`;
   }
   const response = await fetch(`${GITHUB_API}${path}`, { headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2026-03-10" } });
   const text = await response.text();
