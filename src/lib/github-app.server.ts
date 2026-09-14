@@ -51,6 +51,14 @@ async function github<T>(path: string, init: RequestInit = {}, token?: string): 
   return { data, response };
 }
 
+export async function githubAppInstallUrl(): Promise<string> {
+  const jwt = createAppJwt();
+  const result = await github<{ slug: string }>("/app", {
+    headers: { Authorization: `Bearer ${jwt}` },
+  });
+  return `https://github.com/apps/${encodeURIComponent(result.data.slug)}/installations/new`;
+}
+
 async function getInstallationToken(owner: string, repo: string): Promise<string> {
   const jwt = createAppJwt();
   const installation = await github<{ id: number }>(
