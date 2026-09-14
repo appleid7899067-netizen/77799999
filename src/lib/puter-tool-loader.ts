@@ -25,8 +25,8 @@ type PuterFunctionTool = {
 };
 
 const TOOLS_URL = "https://www.codingfleet.com/api/tools";
-// Expose up to 20 real CodingFleet tools to the model in one tool-calling turn.
 const TOOL_LIMIT = 20;
+const MAX_TOOL_ROUNDS = 12;
 const DEFAULT_MODELS = ["gpt-5.6-luna", "claude-sonnet-4-6", "gemini-3.1-flash-lite"] as const;
 const CODINGFLEET_BASE = "https://www.codingfleet.com/api";
 let cachedTools: CodingFleetTool[] | null = null;
@@ -71,6 +71,7 @@ function toolParameters(tool: CodingFleetTool): Record<string, unknown> {
 
 function toPuterTools(tools: CodingFleetTool[]): PuterFunctionTool[] {
   return tools
+    .slice(0, TOOL_LIMIT)
     .map((tool) => {
       const name = toolName(tool);
       if (!name) return null;
@@ -88,6 +89,7 @@ function toPuterTools(tools: CodingFleetTool[]): PuterFunctionTool[] {
 
 function toolSummary(tools: CodingFleetTool[]): string {
   return tools
+    .slice(0, TOOL_LIMIT)
     .map((tool) => JSON.stringify({ name: toolName(tool), description: tool.description, input_schema: toolParameters(tool) }))
     .join("\n");
 }
@@ -148,20 +150,19 @@ async function executeTool(tool: CodingFleetTool, args: Record<string, unknown>)
   try { return JSON.parse(text); } catch { return text; }
 }
 
-async function chatModel(prompt: string, tools: CodingFleetTool[], model: string): Promise<{ text: string; response: unknown; toolCalls: ToolCall[] }> {
+async function chatModel(
+  messages: Array<Record<string, unknown>>,
+  tools: CodingFleetTool[],
+  model: string,
+): Promise<{ text: string; response: unknown; toolCalls: ToolCall[] }> {
   const puter = await ensurePuter();
   if (!puter.auth.isSignedIn()) await puter.auth.signIn();
-  const puterTools = toPuterTools(tools);
-  const system = [
-    "You are Bossnu SlieLo Agentic AI.",
-    "Use supplied CodingFleet tools when relevant. Tool calls are real function calls; never invent a tool name or endpoint.",
-    "Never invent credentials. If a private credential is missing, identify the exact service and secret/env-var name; never ask the user to paste the secret into ordinary chat.",
-    "Available tools:", toolSummary(tools),
-  ].join("\n");
-  const response = await puter.ai.chat(
-    [{ role: "system", content: system }, { role: "user", content: prompt }],
-    { model, tools: puterTools, normalize: true, stream: false },
-  );
+  const response = await puter.ai.chat(messages, {
+    model,
+    tools: toPuterTools(tools),
+    normalize: true,
+    stream: false,
+  });
   return { text: extractText(response), response, toolCalls: extractToolCalls(response) };
 }
 
@@ -171,45 +172,72 @@ export async function callWithFallback(
   models: readonly string[] = DEFAULT_MODELS,
 ): Promise<{ ok: true; text: string; model: string; toolCalls: ToolCall[] } | { ok: false; error: string }> {
   let lastError = "No model succeeded.";
+
   for (const model of models) {
     try {
-      let current = await chatModel(prompt, tools, model);
+      const availableTools = tools.slice(0, TOOL_LIMIT);
+      const system = [
+        "You are Bossnu SlieLo Agentic AI.",
+        "Use supplied CodingFleet tools when relevant. Tool calls are real function calls; never invent a tool name or endpoint.",
+        "Never invent credentials. If a private credential is missing, identify the exact service and secret/env-var name; never ask the user to paste the secret into ordinary chat.",
+        "Available tools:", toolSummary(availableTools),
+      ].join("\n");
+      const messages: Array<Record<string, unknown>> = [
+        { role: "system", content: system },
+        { role: "user", content: prompt },
+      ];
       const executed: ToolCall[] = [];
-      if (current.toolCalls.length > 0) {
+
+      for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+        const current = await chatModel(messages, availableTools, model);
+
+        if (current.toolCalls.length === 0) {
+          if (!current.text.trim()) throw new Error("Empty model response.");
+          return { ok: true, text: current.text, model, toolCalls: executed };
+        }
+
         const assistantMessage = assistantToolMessage(current.response);
         if (!assistantMessage) throw new Error("Puter returned tool calls without an assistant message.");
-        const toolMessages = [] as Array<Record<string, unknown>>;
+        messages.push(assistantMessage);
+
         for (const call of current.toolCalls) {
-          const tool = tools.find((candidate) => toolName(candidate) === call.name);
+          const tool = availableTools.find((candidate) => toolName(candidate) === call.name);
+          const toolCallId = call.id ?? call.name;
+
           if (!tool) {
-            toolMessages.push({ role: "tool", tool_call_id: call.id ?? call.name, content: JSON.stringify({ ok: false, error: "Unknown tool" }) });
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCallId,
+              content: JSON.stringify({ ok: false, error: `Unknown tool: ${call.name}` }),
+            });
             continue;
           }
+
           try {
             const result = await executeTool(tool, call.arguments);
             executed.push(call);
-            toolMessages.push({ role: "tool", tool_call_id: call.id ?? call.name, content: JSON.stringify(result) });
+            messages.push({ role: "tool", tool_call_id: toolCallId, content: JSON.stringify(result) });
           } catch (error) {
-            toolMessages.push({ role: "tool", tool_call_id: call.id ?? call.name, content: JSON.stringify({ ok: false, error: error instanceof Error ? error.message : String(error) }) });
+            // Feed the real failure back to the model. The next round may fix
+            // arguments or choose another tool; do not hide the failure.
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCallId,
+              content: JSON.stringify({
+                ok: false,
+                error: error instanceof Error ? error.message : String(error),
+              }),
+            });
           }
         }
-        const puter = await ensurePuter();
-        const finalResponse = await puter.ai.chat(
-          [
-            { role: "user", content: prompt },
-            assistantMessage,
-            ...toolMessages,
-          ],
-          { model, normalize: true, stream: false },
-        );
-        current = { text: extractText(finalResponse), response: finalResponse, toolCalls: extractToolCalls(finalResponse) };
       }
-      if (!current.text.trim()) throw new Error("Empty model response.");
-      return { ok: true, text: current.text, model, toolCalls: executed.length ? executed : current.toolCalls };
+
+      throw new Error(`Tool loop exceeded ${MAX_TOOL_ROUNDS} rounds.`);
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }
   }
+
   return { ok: false, error: lastError };
 }
 
