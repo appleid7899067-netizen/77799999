@@ -1,5 +1,4 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PuterProvider } from "@/lib/puter-context";
@@ -39,24 +38,22 @@ export const Route = createRootRoute({
       </head>
       <body className="bg-bg text-fg">
         <PreviewHostBridge />
-        <AuthProvider>
-          <PuterProvider>
-            <TooltipProvider delayDuration={200}>
-              <Outlet />
-              <Toaster
-                theme="dark"
-                position="bottom-right"
-                toastOptions={{
-                  style: {
-                    background: "#1c2026",
-                    border: "1px solid #262b32",
-                    color: "#eceef2",
-                  },
-                }}
-              />
-            </TooltipProvider>
-          </PuterProvider>
-        </AuthProvider>
+        <PuterProvider>
+          <TooltipProvider delayDuration={200}>
+            <Outlet />
+            <Toaster
+              theme="dark"
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: "#1c2026",
+                  border: "1px solid #262b32",
+                  color: "#eceef2",
+                },
+              }}
+            />
+          </TooltipProvider>
+        </PuterProvider>
         <Scripts />
       </body>
     </html>
