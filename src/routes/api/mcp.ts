@@ -39,6 +39,16 @@ function nativeTools(): Tool[] {
       description: "Read pull requests from a public GitHub repository, including review and merge metadata.",
       inputSchema: { type: "object", properties: { owner: { type: "string" }, repo: { type: "string" }, state: { type: "string", enum: ["open", "closed", "all"] }, per_page: { type: "integer", minimum: 1, maximum: 30 }, page: { type: "integer", minimum: 1 } }, required: ["owner", "repo"], additionalProperties: false },
     },
+    {
+      name: "github_create_issue",
+      description: "Create an issue in a GitHub repository using the configured server token.",
+      inputSchema: { type: "object", properties: { owner: { type: "string" }, repo: { type: "string" }, title: { type: "string", minLength: 1, maxLength: 256 }, body: { type: "string" }, labels: { type: "array", items: { type: "string" }, maxItems: 20 }, assignees: { type: "array", items: { type: "string" }, maxItems: 10 } }, required: ["owner", "repo", "title"], additionalProperties: false },
+    },
+    {
+      name: "github_update_issue",
+      description: "Update an existing GitHub issue using the configured server token.",
+      inputSchema: { type: "object", properties: { owner: { type: "string" }, repo: { type: "string" }, issue_number: { type: "integer", minimum: 1 }, title: { type: "string", minLength: 1, maxLength: 256 }, body: { type: "string" }, state: { type: "string", enum: ["open", "closed"] }, state_reason: { type: "string", enum: ["completed", "reopened", "not_planned", "duplicate"] }, labels: { type: "array", items: { type: "string" }, maxItems: 20 }, assignees: { type: "array", items: { type: "string" }, maxItems: 10 } }, required: ["owner", "repo", "issue_number"], additionalProperties: false },
+    },
   ];
 }
 
@@ -75,6 +85,8 @@ async function githubCall(name: string, args: Record<string, unknown>): Promise<
   const repo = String(args.repo ?? "").trim();
   if (!owner || !repo) throw new Error("GitHub requires owner and repo.");
   let path = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+  let method = "GET";
+  let requestBody: Record<string, unknown> | undefined;
   if (name === "github_get_file") {
     const file = String(args.path ?? "").replace(/^\/+/, "");
     if (!file) throw new Error("GitHub file path is required.");
@@ -90,8 +102,33 @@ async function githubCall(name: string, args: Record<string, unknown>): Promise<
     const page = boundedNumber(args.page, 1, 1, 1000);
     const resource = name === "github_list_issues" ? "issues" : "pulls";
     path += `/${resource}?state=${encodeURIComponent(state)}&per_page=${perPage}&page=${page}`;
+  } else if (name === "github_create_issue") {
+    const title = String(args.title ?? "").trim();
+    if (!title) throw new Error("GitHub issue title is required.");
+    method = "POST";
+    path += "/issues";
+    requestBody = { title, ...(typeof args.body === "string" ? { body: args.body } : {}), ...(Array.isArray(args.labels) ? { labels: args.labels } : {}), ...(Array.isArray(args.assignees) ? { assignees: args.assignees } : {}) };
+  } else if (name === "github_update_issue") {
+    const issueNumber = boundedNumber(args.issue_number, 0, 1, 2147483647);
+    if (!issueNumber) throw new Error("GitHub issue_number must be a positive integer.");
+    const update: Record<string, unknown> = {};
+    if (typeof args.title === "string") update.title = args.title.trim();
+    if (typeof args.body === "string") update.body = args.body;
+    if (typeof args.state === "string") update.state = args.state;
+    if (typeof args.state_reason === "string") update.state_reason = args.state_reason;
+    if (Array.isArray(args.labels)) update.labels = args.labels;
+    if (Array.isArray(args.assignees)) update.assignees = args.assignees;
+    if (!Object.keys(update).length) throw new Error("At least one issue field is required to update.");
+    method = "PATCH";
+    path += `/issues/${issueNumber}`;
+    requestBody = update;
   }
-  const response = await fetch(`${GITHUB_API}${path}`, { headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2026-03-10" } });
+  const token = process.env.GITHUB_TOKEN;
+  if ((name === "github_create_issue" || name === "github_update_issue") && !token) throw new Error("GitHub write tools require the GITHUB_TOKEN server environment variable.");
+  const headers: Record<string, string> = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2026-03-10" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  if (requestBody) headers["Content-Type"] = "application/json";
+  const response = await fetch(`${GITHUB_API}${path}`, { method, headers, body: requestBody ? JSON.stringify(requestBody) : undefined });
   const text = await response.text();
   if (!response.ok) throw new Error(`GitHub HTTP ${response.status}: ${text.slice(0, 300)}`);
   try { return JSON.parse(text); } catch { return text; }
