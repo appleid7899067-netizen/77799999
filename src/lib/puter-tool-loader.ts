@@ -10,6 +10,8 @@ type CodingFleetTool = {
   parameters?: unknown;
   endpoint?: unknown;
   url?: unknown;
+  mcpServer?: string;
+  mcpToolName?: string;
   [key: string]: unknown;
 };
 
@@ -25,6 +27,9 @@ type PuterFunctionTool = {
 };
 
 const TOOLS_URL = "https://www.codingfleet.com/api/tools";
+// Public, keyless MCP server sourced from the open-source Keenable MCP project.
+// It exposes search_web_pages and fetch_page_content over Streamable HTTP.
+const PUBLIC_MCP_SERVERS = ["https://api.keenable.ai/mcp"] as const;
 const TOOL_LIMIT = 20;
 const MAX_TOOL_ROUNDS = 12;
 const DEFAULT_MODELS = ["gpt-5.6-luna", "claude-sonnet-4-6", "gemini-3.1-flash-lite"] as const;
@@ -44,21 +49,6 @@ function normalizeTools(value: unknown): CodingFleetTool[] {
     : [];
 }
 
-export async function loadCodingFleetTools(forceRefresh = false): Promise<CodingFleetTool[]> {
-  if (!forceRefresh && cachedTools && Date.now() - cachedAt < CACHE_TTL_MS) return cachedTools;
-  try {
-    const response = await fetch(TOOLS_URL, { headers: { Accept: "application/json" } });
-    if (!response.ok) throw new Error(`CodingFleet tools returned HTTP ${response.status}.`);
-    const tools = normalizeTools(await response.json());
-    cachedTools = tools;
-    cachedAt = Date.now();
-    return tools;
-  } catch (error) {
-    if (cachedTools) return cachedTools;
-    throw new Error(`Unable to load CodingFleet tools: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
 function toolName(tool: CodingFleetTool) {
   return String(tool.name ?? tool.slug ?? tool.id ?? "").trim();
 }
@@ -67,6 +57,130 @@ function toolParameters(tool: CodingFleetTool): Record<string, unknown> {
   const value = tool.input_schema ?? tool.inputSchema ?? tool.parameters;
   if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
   return { type: "object", properties: {} };
+}
+
+async function loadPublicMcpTools(): Promise<CodingFleetTool[]> {
+  const loaded: CodingFleetTool[] = [];
+  for (const server of PUBLIC_MCP_SERVERS) {
+    try {
+      const init = await fetch(server, {
+        method: "POST",
+        headers: { Accept: "application/json, text/event-stream", "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "initialize",
+          params: {
+            protocolVersion: "2025-06-18",
+            capabilities: {},
+            clientInfo: { name: "Bossnu-CodingFleet", version: "1.0.0" },
+          },
+        }),
+      });
+      if (!init.ok) continue;
+      const sessionId = init.headers.get("mcp-session-id");
+      const list = await fetch(server, {
+        method: "POST",
+        headers: {
+          Accept: "application/json, text/event-stream",
+          "Content-Type": "application/json",
+          ...(sessionId ? { "Mcp-Session-Id": sessionId } : {}),
+        },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} }),
+      });
+      if (!list.ok) continue;
+      const payload = await readJsonRpcResponse(list);
+      const tools = (payload?.result as Record<string, unknown> | undefined)?.tools;
+      if (!Array.isArray(tools)) continue;
+      for (const raw of tools) {
+        if (!raw || typeof raw !== "object") continue;
+        const tool = raw as Record<string, unknown>;
+        const name = String(tool.name ?? "").trim();
+        if (!name) continue;
+        loaded.push({
+          name: `mcp_${name}`,
+          description: String(tool.description ?? `Public MCP tool: ${name}`),
+          inputSchema: tool.inputSchema ?? { type: "object", properties: {} },
+          mcpServer: server,
+          mcpToolName: name,
+        });
+      }
+    } catch {
+      // Public MCP is an optional source. CodingFleet tools remain usable if it is unavailable.
+    }
+  }
+  return loaded;
+}
+
+async function readJsonRpcResponse(response: Response): Promise<Record<string, unknown>> {
+  const text = await response.text();
+  const trimmed = text.trim();
+  if (!trimmed) return {};
+  if (trimmed.startsWith("data:")) {
+    const data = trimmed.split(/\r?\n/).find((line) => line.startsWith("data:"));
+    if (data) return JSON.parse(data.slice(5).trim()) as Record<string, unknown>;
+  }
+  return JSON.parse(trimmed) as Record<string, unknown>;
+}
+
+async function callPublicMcpTool(tool: CodingFleetTool, args: Record<string, unknown>): Promise<unknown> {
+  const server = String(tool.mcpServer ?? "");
+  const name = String(tool.mcpToolName ?? "");
+  if (!server || !name) return { ok: false, error: `Invalid MCP tool configuration for ${toolName(tool)}.` };
+
+  const init = await fetch(server, {
+    method: "POST",
+    headers: { Accept: "application/json, text/event-stream", "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "Bossnu-CodingFleet", version: "1.0.0" },
+      },
+    }),
+  });
+  if (!init.ok) throw new Error(`MCP initialize failed: HTTP ${init.status}`);
+  const sessionId = init.headers.get("mcp-session-id");
+  const response = await fetch(server, {
+    method: "POST",
+    headers: {
+      Accept: "application/json, text/event-stream",
+      "Content-Type": "application/json",
+      ...(sessionId ? { "Mcp-Session-Id": sessionId } : {}),
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: { name, arguments: args } }),
+  });
+  if (!response.ok) throw new Error(`MCP tool ${name} failed: HTTP ${response.status}`);
+  const payload = await readJsonRpcResponse(response);
+  if (payload.error) throw new Error(JSON.stringify(payload.error));
+  return (payload.result as unknown) ?? payload;
+}
+
+export async function loadCodingFleetTools(forceRefresh = false): Promise<CodingFleetTool[]> {
+  if (!forceRefresh && cachedTools && Date.now() - cachedAt < CACHE_TTL_MS) return cachedTools;
+
+  const sources = await Promise.allSettled([
+    fetch(TOOLS_URL, { headers: { Accept: "application/json" } }).then(async (response) => {
+      if (!response.ok) throw new Error(`CodingFleet tools returned HTTP ${response.status}.`);
+      return normalizeTools(await response.json());
+    }),
+    loadPublicMcpTools(),
+  ]);
+
+  const codingFleet = sources[0].status === "fulfilled" ? sources[0].value : [];
+  const mcpTools = sources[1].status === "fulfilled" ? sources[1].value : [];
+  const tools = [...codingFleet, ...mcpTools].slice(0, TOOL_LIMIT);
+
+  if (tools.length > 0) {
+    cachedTools = tools;
+    cachedAt = Date.now();
+    return tools;
+  }
+  if (cachedTools) return cachedTools;
+  throw new Error("No tools are available: CodingFleet and public MCP tool discovery both failed.");
 }
 
 function toPuterTools(tools: CodingFleetTool[]): PuterFunctionTool[] {
@@ -138,6 +252,7 @@ function resolveEndpoint(tool: CodingFleetTool): string | null {
 }
 
 async function executeTool(tool: CodingFleetTool, args: Record<string, unknown>): Promise<unknown> {
+  if (tool.mcpServer) return callPublicMcpTool(tool, args);
   const endpoint = resolveEndpoint(tool);
   if (!endpoint) return { ok: false, error: `Tool ${toolName(tool)} has no callable HTTPS endpoint exposed by CodingFleet.` };
   const response = await fetch(endpoint, {
@@ -178,7 +293,8 @@ export async function callWithFallback(
       const availableTools = tools.slice(0, TOOL_LIMIT);
       const system = [
         "You are Bossnu SlieLo Agentic AI.",
-        "Use supplied CodingFleet tools when relevant. Tool calls are real function calls; never invent a tool name or endpoint.",
+        "Use supplied CodingFleet and public MCP tools when relevant. Tool calls are real function calls; never invent a tool name or endpoint.",
+        "If a public MCP tool can satisfy the request, prefer it over claiming that no tools are available.",
         "Never invent credentials. If a private credential is missing, identify the exact service and secret/env-var name; never ask the user to paste the secret into ordinary chat.",
         "Available tools:", toolSummary(availableTools),
       ].join("\n");
@@ -205,11 +321,7 @@ export async function callWithFallback(
           const toolCallId = call.id ?? call.name;
 
           if (!tool) {
-            messages.push({
-              role: "tool",
-              tool_call_id: toolCallId,
-              content: JSON.stringify({ ok: false, error: `Unknown tool: ${call.name}` }),
-            });
+            messages.push({ role: "tool", tool_call_id: toolCallId, content: JSON.stringify({ ok: false, error: `Unknown tool: ${call.name}` }) });
             continue;
           }
 
@@ -218,15 +330,10 @@ export async function callWithFallback(
             executed.push(call);
             messages.push({ role: "tool", tool_call_id: toolCallId, content: JSON.stringify(result) });
           } catch (error) {
-            // Feed the real failure back to the model. The next round may fix
-            // arguments or choose another tool; do not hide the failure.
             messages.push({
               role: "tool",
               tool_call_id: toolCallId,
-              content: JSON.stringify({
-                ok: false,
-                error: error instanceof Error ? error.message : String(error),
-              }),
+              content: JSON.stringify({ ok: false, error: error instanceof Error ? error.message : String(error) }),
             });
           }
         }
